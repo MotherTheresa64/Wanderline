@@ -1,0 +1,13 @@
+{
+  "name": "Wanderline",
+  "short_name": "Wanderline",
+  "description": "Beautiful trip planning from first idea to final day.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2efe6",
+  "theme_color": "#f2efe6",
+  "icons": [
+    {"src":"/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
