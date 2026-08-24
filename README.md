@@ -12,10 +12,13 @@
 - Packing checklist with persistent completion state
 - Saved-place browsing and local travel tips
 - Native Web Share support with clipboard fallback
+- Branded runtime error recovery instead of blank-screen failure
 - Google sign-in hook when Firebase configuration is present
 - Credential-free demo mode when third-party services are absent
 - Responsive mobile-first presentation
-- Express production host with health/config endpoints, Render Blueprint, and GitHub Actions validation
+- Installable web-app metadata and reduced-motion/focus accessibility safeguards
+- Express production host with health/config endpoints, security headers, caching policy, and graceful shutdown
+- Render Blueprint and GitHub Actions gated on the same full verification command
 
 ## Stack
 
@@ -36,13 +39,13 @@ npm run dev
 
 Open `http://localhost:5173`. The complete visible demo works without external credentials and persists itinerary, budget, and packing changes in `localStorage`.
 
-Useful checks:
+Full preflight:
 
 ```bash
-npm run typecheck
-npm run build
-npm start
+npm run check
 ```
+
+That command typechecks both targets, builds client/server, and verifies the required production artifacts. Run `npm start` afterward to test the compiled Express-hosted build.
 
 ## Optional integrations
 
@@ -75,11 +78,21 @@ The server exposes:
 - `GET /api/health` — service and provider readiness
 - `GET /api/config` — non-secret maps/weather/Firebase readiness flags
 
+## Engineering docs
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — client domain, sharing, auth, provider boundaries, persistence, and production data model
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — local/Render/Firebase/provider deployment runbook and production migration path
+- [`docs/QA.md`](docs/QA.md) — itinerary, budget, sharing, auth, integration, mobile, API, and accessibility acceptance checklist
+
 ## Deployment
 
-The included `render.yaml` pins Node, explicitly installs the build toolchain, defines the required environment placeholders, starts the compiled Express application, and uses `/api/health` for Render health checks.
+The included `render.yaml` pins Node, installs the build toolchain, defines the required environment placeholders, starts the compiled Express application, and uses `/api/health` for Render health checks.
 
-GitHub Actions runs strict typechecking, builds the browser and Node targets, and verifies the expected production artifacts exist.
+```text
+GitHub repo → npm install → npm run check → Express host → health check
+```
+
+CI uses the same `npm run check` contract, keeping local, CI, and Render verification aligned.
 
 ## Portfolio intent
 
