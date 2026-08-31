@@ -1,7 +1,7 @@
 import {freshDemo} from './demo';
 import type {Trip,Workspace} from './model';
 
-const KEY='wanderline-workspace-v2';
+const KEY='wanderline-workspace-v3';
 
 function looksLikeTrip(value:unknown):value is Trip{
   if(!value||typeof value!=='object')return false;
@@ -12,7 +12,7 @@ function looksLikeTrip(value:unknown):value is Trip{
 export function loadWorkspace():Workspace{
   try{
     const parsed=JSON.parse(localStorage.getItem(KEY)||'null') as Partial<Workspace>|null;
-    if(parsed?.version===2&&typeof parsed.currentUserId==='string'&&typeof parsed.activeTripId==='string'&&Array.isArray(parsed.trips)&&parsed.trips.length>0&&parsed.trips.every(looksLikeTrip))return parsed as Workspace;
+    if(parsed?.version===3&&typeof parsed.currentUserId==='string'&&typeof parsed.activeTripId==='string'&&Array.isArray(parsed.trips)&&parsed.trips.length>0&&parsed.trips.every(looksLikeTrip))return parsed as Workspace;
   }catch{/* Fall back to the polished sample workspace. */}
   return freshDemo();
 }
