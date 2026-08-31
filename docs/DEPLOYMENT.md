@@ -18,7 +18,17 @@ For manual production-host inspection:
 npm start
 ```
 
-## 2. Firebase Auth
+## 2. External services
+
+The finalized application does **not** require Maps or Weather API keys:
+
+- current Barcelona weather is read from the public Open-Meteo API with a graceful local fallback;
+- map actions open OpenStreetMap in a new tab;
+- the rest of the trip experience is local-first and works without credentials.
+
+The only optional external setup left is Firebase Authentication.
+
+## 3. Firebase Auth
 
 Create a Firebase project and web application, enable Google sign-in, and set:
 
@@ -31,20 +41,17 @@ VITE_FIREBASE_APP_ID
 
 After the public Render URL exists, add its hostname to Firebase Authentication authorized domains.
 
-## 3. Maps and weather providers
-
-The current demo does not require provider credentials. When real integrations are enabled, set server-side provider secrets:
-
-```text
-MAPS_API_KEY
-WEATHER_API_KEY
-```
-
-Do not expose unrestricted provider secrets through `VITE_*` variables. Prefer small server endpoints that call the provider and return normalized Wanderline data.
+If Firebase is not configured, the app stays fully usable with the built-in local demo identity.
 
 ## 4. Render
 
-Create a Blueprint from this repository. The included `render.yaml` defines one Node web service.
+The production service is already deployed at:
+
+```text
+https://wanderline-s1yv.onrender.com
+```
+
+The included `render.yaml` defines one Node web service with Auto-Deploy-compatible configuration.
 
 Expected commands:
 
@@ -54,40 +61,43 @@ Start: npm start
 Health: /api/health
 ```
 
-Enter all `sync: false` values through Render rather than committing secrets.
+Only the optional `VITE_FIREBASE_*` values need to be supplied when Firebase is enabled.
 
-## 5. First-deploy checks
+## 5. Release checks
 
 Verify:
 
-1. the itinerary renders correctly on desktop and mobile;
+1. itinerary renders correctly on desktop, tablet, and mobile;
 2. trip countdown is based on the current date;
 3. itinerary search filters activities correctly;
-4. adding an activity persists its time, type, place, cost, and note;
-5. activity completion persists after refresh;
-6. budget totals/category percentages stay correct after new expenses;
-7. packing changes persist after refresh;
-8. Share uses native Web Share where available and clipboard fallback elsewhere;
-9. Google sign-in works after Firebase configuration;
-10. `/api/health` and `/api/config` return expected JSON;
-11. unknown `/api/*` routes return JSON `404` responses;
-12. browser console has no uncaught errors.
+4. activities can be created, edited, deleted, completed, and reopened;
+5. activity time/type/place/cost/duration/note persist after refresh;
+6. budget totals/category percentages stay correct after adding and deleting expenses;
+7. expense search filters the ledger without changing aggregate totals;
+8. packing state persists after refresh;
+9. saved places can be created, searched, opened, mapped, and removed;
+10. OpenStreetMap opens from both trip-map and saved-place actions;
+11. live Open-Meteo weather loads when reachable and fallback weather keeps the UI usable when not;
+12. Web Share works where supported and clipboard fallback works elsewhere;
+13. Google sign-in works after Firebase configuration;
+14. `/api/health` and `/api/config` return expected JSON;
+15. unknown `/api/*` routes return JSON `404` responses;
+16. browser console has no uncaught errors.
 
-## 6. Hosted persistence phase
+## 6. Hosted per-user persistence phase
 
-Introduce authenticated trip ownership and collaboration through API resources for trips, members, activities, expenses, saved places, and packing items. Keep external maps/weather provider calls behind the API so vendor-specific schemas and secrets remain outside presentation components.
+Firebase Authentication by itself provides identity, but it does not move browser-local trip data between devices. For real private user accounts, add Firestore or another hosted datastore keyed to the authenticated user.
+
+A hosted model should cover trips, members, activities, expenses, saved places, and packing items. Keep the UI-facing data shape independent from the persistence provider so the local-first demo can remain a useful fallback.
 
 ## 7. After deployment
 
-Once the URL is stable:
-
-- add it to the GitHub repository homepage field;
-- add the live URL/screenshots to the README;
-- create a strong social preview image;
-- add the project to the portfolio and LinkedIn;
+- keep the live URL in the GitHub README and repository homepage;
+- capture desktop and physical-phone screenshots;
 - test Web Share on a physical phone and clipboard fallback on desktop;
-- test the site from a clean/incognito browser with no existing local storage.
+- test from a clean/incognito browser with no existing local storage;
+- add the live project to the portfolio and LinkedIn.
 
 ## Rollback
 
-Use Render's previous successful deploy if a release regresses. Wanderline should retain a functional local/demo experience even when Firebase, maps, or weather providers are absent.
+If a release regresses, use Render's previous successful deploy. Auto-Deploy tracks `main`, and the build gate prevents a failing TypeScript/build check from replacing the current live release.
