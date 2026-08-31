@@ -7,9 +7,32 @@ Use this after a local build and again against the deployed Render URL.
 - [ ] App loads with no blank screen or uncaught console error.
 - [ ] Branded favicon/title appear.
 - [ ] Product is usable without credentials.
-- [ ] Refresh preserves itinerary, budget, packing, and saved-place changes.
+- [ ] Refresh preserves itinerary, budget, packing, saved-place, and appearance changes.
 - [ ] Error boundary presents a branded recovery screen if rendering fails.
-- [ ] Sample-trip reset restores the original data without clearing unrelated browser storage.
+- [ ] Sample-trip reset restores the original trip data without clearing unrelated browser storage or the selected theme.
+
+## Appearance / personalization
+
+- [ ] Trip-style control is reachable by mouse, touch, and keyboard.
+- [ ] Sunset, Coast, Terracotta, and Night train can each be selected.
+- [ ] Selected theme survives a hard refresh.
+- [ ] Browser theme-color changes with the active theme.
+- [ ] Hero, sidebar, itinerary, map, weather, budget, saved places, forms, and feedback all adopt the selected theme.
+- [ ] Night train preserves readable contrast for text, cards, forms, maps, and budget surfaces.
+- [ ] Light themes preserve clear selected/hover/focus states.
+- [ ] Theme-aware budget ring still matches the displayed percentage after switching themes.
+- [ ] Escape closes the appearance panel.
+- [ ] Appearance panel fits within phone viewport and toast feedback stays visible above it.
+
+## USD presentation
+
+- [ ] Trip-summary budget uses `$`, not `€`.
+- [ ] Activity costs use `$` consistently.
+- [ ] Budget total, remaining amount, expense rows, category values, and new expenses use `$`.
+- [ ] Activity and expense form labels use `$` rather than euro notation.
+- [ ] Dynamically created/edited content remains USD after React rerenders.
+- [ ] Legacy euro iconography is not visible in the rendered interface.
+- [ ] Free/zero-cost activities still display `Free` rather than `$0` where intended.
 
 ## Itinerary
 
@@ -24,7 +47,6 @@ Use this after a local build and again against the deployed Render URL.
 - [ ] Activity deletion removes the correct item.
 - [ ] Activities remain ordered chronologically after create/edit.
 - [ ] Trip progress updates when completion state changes.
-- [ ] Zero-cost activities display as free rather than malformed currency.
 
 ## Budget
 
@@ -87,13 +109,14 @@ With Firebase:
 - [ ] HTML remains fresh across deploys.
 - [ ] Security headers are present.
 
-## Accessibility
+## Accessibility / mobile
 
 - [ ] Keyboard focus is clearly visible.
 - [ ] Modal controls can be completed without a mouse.
 - [ ] Escape closes the active modal/menu layer.
 - [ ] Reduced-motion preference is respected.
 - [ ] Touch targets remain usable on phone screens.
+- [ ] Mobile navigation includes a backdrop and remains above page content.
 - [ ] No essential product area depends on horizontal desktop scrolling on a phone.
 
 ## Viewports / devices
