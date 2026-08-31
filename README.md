@@ -6,12 +6,15 @@
 
 ## What works today
 
+- Four complete user-selectable travel themes — **Sunset, Coast, Terracotta, and Night train** — with device-local persistence and matching browser theme color
+- Theme-aware hero, trip navigation, itinerary, maps, weather, budget, saved places, forms, mobile layouts, focus states, and feedback rather than accent-only recoloring
 - Immersive Barcelona trip dashboard with live trip countdown and progress
 - Day-by-day itinerary with persistent completion state
 - Activity creation and editing with time, type, place, estimated cost, duration, and notes
 - Activity deletion and chronological sorting within each day
 - Context-aware itinerary search across title, place, note, and activity type
-- Budget ledger with safe percentage math, category breakdowns, expense creation, search, and deletion
+- **USD-first budget presentation** using `$` consistently across totals, activities, expenses, forms, dynamically created entries, and trip summary UI
+- Budget ledger with safe percentage math, theme-aware progress visualization, category breakdowns, expense creation, search, and deletion
 - Packing checklist with persistent completion state
 - Full saved-place workflow: create, search, view details, open in OpenStreetMap, and remove
 - Saved-place counts update throughout the interface
@@ -22,19 +25,20 @@
 - Branded runtime error recovery instead of blank-screen failure
 - Google sign-in hook when Firebase configuration is present
 - Credential-free local-first mode when Firebase is absent
-- Fully responsive desktop, tablet, and phone presentation with off-canvas mobile navigation and reformatted itinerary/budget/place layouts
-- Installable web-app metadata, canonical production metadata, reduced-motion support, and visible keyboard-focus safeguards
+- Fully responsive desktop, tablet, and phone presentation with off-canvas mobile navigation, mobile backdrop, and reformatted itinerary/budget/place layouts
+- Installable web-app metadata, canonical production metadata, reduced-motion support, visible keyboard-focus safeguards, refined scrolling, and non-overlapping toast/theme feedback
 - Express production host with health/config endpoints, security headers, caching policy, API 404 handling, and graceful shutdown
 - Render auto-deploy from `main` with `/api/health` health checks
 - GitHub Actions and Render builds gated on the same full verification command
 
 ## Stack
 
-**Frontend:** React 19, TypeScript, Vite, Lucide, custom responsive CSS  
+**Frontend:** React 19, TypeScript, Vite, Lucide, custom responsive/themed CSS  
 **Auth:** Firebase Authentication (optional final integration)  
 **Weather:** Open-Meteo  
 **Maps:** OpenStreetMap  
-**Persistence:** local-first trip workspace  
+**Currency presentation:** USD  
+**Persistence:** local-first trip workspace + persisted appearance preference  
 **Hosting:** Express 5 + Render  
 **Quality:** strict TypeScript, GitHub Actions, pinned dependency versions
 
@@ -47,7 +51,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The complete visible product works without external credentials and persists itinerary, budget, packing, and saved-place changes in `localStorage`.
+Open `http://localhost:5173`. The complete visible product works without external credentials and persists itinerary, budget, packing, saved-place, and appearance changes in `localStorage`.
 
 Full preflight:
 
@@ -73,7 +77,7 @@ Enable Google as a sign-in provider in Firebase Authentication. No Maps or Weath
 
 ## Persistence boundary
 
-Itinerary items, expenses, packing state, and saved places are currently local-first so the product is immediately reviewable without account setup. Authentication is isolated in `src/firebase.ts`, while the Express host remains independent from browser state.
+Itinerary items, expenses, packing state, saved places, and appearance preference are currently local-first so the product is immediately reviewable without account setup. Authentication is isolated in `src/firebase.ts`, appearance in `src/theme.ts`, USD display localization in `src/currency.ts`, while the Express host remains independent from browser state.
 
 For private user accounts and cross-device trip data, the remaining production integration is Firebase Authentication plus a hosted datastore such as Firestore keyed to the authenticated user. The current live demo intentionally keeps each browser’s trip changes self-contained.
 
@@ -101,4 +105,4 @@ CI uses the same `npm run check` contract, keeping local, CI, and Render verific
 
 ## Portfolio intent
 
-Wanderline is designed to show consumer-product engineering rather than another CRUD dashboard: visual hierarchy, mobile responsiveness, time-sensitive UI, editable persistent state, budget calculations, browser platform APIs, third-party data consumption without secret leakage, auth boundaries, and deployment-ready full-stack structure all live in one cohesive product.
+Wanderline is designed to show consumer-product engineering rather than another CRUD dashboard: visual hierarchy, persistent personalization, mobile responsiveness, time-sensitive UI, editable persistent state, budget calculations, USD localization, browser platform APIs, third-party data consumption without secret leakage, auth boundaries, and deployment-ready full-stack structure all live in one cohesive product.
