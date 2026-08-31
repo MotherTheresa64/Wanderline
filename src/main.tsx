@@ -9,6 +9,7 @@ import './accessibility.css';
 import './final-polish.css';
 import './themes.css';
 import './release-polish.css';
+import './usd.css';
 
 initializeThemes();
 initializeUsdDisplay();
