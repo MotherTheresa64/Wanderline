@@ -1,46 +1,109 @@
 # Wanderline
 
-**Make the trip feel real before you leave.** Wanderline is a consumer-focused travel planning application for building day-by-day itineraries, tracking budgets, saving places, managing practical trip details, and presenting the experience with a calmer visual language than a typical admin dashboard.
+**Plan together. Travel lighter.** Wanderline is a collaborative travel workspace for planning solo or group trips from the first saved idea through the actual journey. It combines itinerary planning, group decisions, travelers and permissions, saved places, shared expenses, packing, bookings, practical notes, weather, Google Maps actions, and trip history in one responsive consumer product.
 
 **Live demo:** https://wanderline-s1yv.onrender.com
 
 ## What works today
 
-- Four complete user-selectable travel themes — **Sunset, Coast, Terracotta, and Night train** — with device-local persistence and matching browser theme color
-- Theme-aware hero, trip navigation, itinerary, maps, weather, budget, saved places, forms, mobile layouts, focus states, and feedback rather than accent-only recoloring
-- Immersive Barcelona trip dashboard with live trip countdown and progress
-- Day-by-day itinerary with persistent completion state
-- Activity creation and editing with time, type, place, estimated cost, duration, and notes
-- Activity deletion and chronological sorting within each day
-- Context-aware itinerary search across title, place, note, and activity type
-- **USD-first budget presentation** using `$` consistently across totals, activities, expenses, forms, dynamically created entries, and trip summary UI
-- Budget ledger with safe percentage math, theme-aware progress visualization, category breakdowns, expense creation, search, and deletion
-- Packing checklist with persistent completion state
-- Full saved-place workflow: create, search, view details, open in OpenStreetMap, and remove
-- Saved-place counts update throughout the interface
-- Live Barcelona weather from the keyless Open-Meteo API with a graceful built-in fallback
-- Clickable map experience that opens Barcelona in OpenStreetMap without requiring a vendor API key
-- Native Web Share support with clipboard fallback
-- One-click sample-trip reset
-- Branded runtime error recovery instead of blank-screen failure
-- Google sign-in hook when Firebase configuration is present
-- Credential-free local-first mode when Firebase is absent
-- Fully responsive desktop, tablet, and phone presentation with off-canvas mobile navigation, mobile backdrop, and reformatted itinerary/budget/place layouts
-- Installable web-app metadata, canonical production metadata, reduced-motion support, visible keyboard-focus safeguards, refined scrolling, and non-overlapping toast/theme feedback
-- Express production host with health/config endpoints, security headers, caching policy, API 404 handling, and graceful shutdown
-- Render auto-deploy from `main` with `/api/health` health checks
-- GitHub Actions and Render builds gated on the same full verification command
+### Trips and collaboration
+
+- Create and switch between multiple trips
+- Edit trip name, destination, dates, description, and USD budget
+- Archive or permanently delete trips
+- Solo trips work without collaboration clutter
+- Add pending traveler invitations in the credential-free demo
+- Owner, Editor, and Viewer roles are modeled and enforced in the UI
+- Owners can change member roles or remove travelers
+- Shared activity history records meaningful trip changes
+- The local data model already matches the Firebase/Firestore collaboration boundary planned for the authenticated release
+
+### Collaborative planning
+
+- Dedicated **Ideas** workspace keeps suggestions out of the confirmed itinerary
+- Travelers can vote on suggested activities
+- Editors can promote ideas to Planned or Confirmed
+- Activities support Suggested, Planned, Confirmed, and Completed states
+- Each plan records who added it and which travelers are attending
+
+### Day-by-day itinerary
+
+- One clean chronological timeline with **one card per activity** — no duplicate floating itinerary cards
+- Day tabs derived from the trip's real start/end dates
+- Add, edit, delete, complete, and reopen activities
+- Time, place, category, duration, notes, attendees, and USD estimated cost
+- Chronological sorting within each day
+- Direct Google Maps place lookup and walking directions from itinerary items
+- Responsive timeline that reformats for narrow phones rather than overlapping or requiring desktop-width content
+
+### Saved places
+
+- Add, edit, search, and remove saved places
+- Store category, neighborhood, notes, and who saved the place
+- Open a place in Google Maps
+- Convert a saved place directly into a prefilled itinerary activity
+
+### Budget and shared expenses
+
+- USD-first presentation throughout the product
+- Overall budget, spent amount, remaining balance, and usage percentage
+- Add, edit, search, categorize, and delete expenses
+- Track who paid
+- Personal, equal, and custom split modes
+- Choose which travelers participate in an expense
+- Custom-share validation ensures entered splits match the expense total
+- Derived per-traveler paid/share/balance figures
+- Settlement suggestions such as who owes whom and how much
+
+### Packing
+
+- Personal and shared packing items
+- Assign responsibility for shared gear to a traveler
+- Completion tracking and preparation progress
+- Add, complete/reopen, and remove packing items
+
+### Notes and bookings
+
+- Shared trip notes with author and update time
+- Add, edit, and delete notes
+- Store flights, hotels, rental cars, restaurants, events, and other reservations
+- Dates, times, locations, confirmation/reference numbers, and practical notes
+- Open booking locations in Google Maps
+
+### Search, weather, sharing, and personalization
+
+- Global search across activities, places, expenses, notes, bookings, and travelers
+- `Ctrl/Cmd + K` keyboard shortcut to focus trip search
+- Destination-aware current weather using the keyless Open-Meteo geocoding + forecast APIs
+- Native Web Share with clipboard fallback
+- Google Maps universal search/directions links — no Google Maps API key or billing setup required for current map actions
+- Four persisted themes: **Sunset, Coast, Terracotta, and Night train**
+- Browser theme-color follows the selected appearance
+- Branded runtime recovery and one-click sample-workspace reset
+
+### Mobile and production behavior
+
+- Desktop, laptop, tablet, phone portrait, phone landscape, and narrow ~360px layouts
+- Off-canvas phone navigation with backdrop
+- Forms and modals remain scrollable inside small viewports
+- Touch-friendly controls and visible keyboard focus
+- Reduced-motion support
+- Local workspace persistence with defensive recovery when browser storage is malformed or unavailable
+- Express production host with health/config endpoints, secure headers, API 404 handling, caching policy, and SPA fallback
+- GitHub Actions runs `npm run check` plus the compiled-server smoke test
+- Render tracks `main` with Auto-Deploy
 
 ## Stack
 
 **Frontend:** React 19, TypeScript, Vite, Lucide, custom responsive/themed CSS  
-**Auth:** Firebase Authentication (optional final integration)  
+**Auth boundary:** Firebase Authentication (Google sign-in scaffolded; final integration pending)  
+**Hosted collaboration boundary:** Firestore or equivalent (final integration pending)  
 **Weather:** Open-Meteo  
-**Maps:** OpenStreetMap  
-**Currency presentation:** USD  
-**Persistence:** local-first trip workspace + persisted appearance preference  
+**Maps:** Google Maps universal links  
+**Currency:** USD  
+**Current persistence:** typed/versioned local-first collaborative workspace  
 **Hosting:** Express 5 + Render  
-**Quality:** strict TypeScript, GitHub Actions, pinned dependency versions
+**Quality:** strict TypeScript, GitHub Actions, production smoke testing, pinned dependencies
 
 ## Local development
 
@@ -51,20 +114,22 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The complete visible product works without external credentials and persists itinerary, budget, packing, saved-place, and appearance changes in `localStorage`.
+The app is fully reviewable without credentials. The Barcelona sample workspace and all local edits are stored under the versioned `wanderline-workspace-v2` browser key. Appearance is persisted separately.
 
-Full preflight:
+Full verification:
 
 ```bash
 npm run check
 npm run smoke:server
 ```
 
-`npm run check` typechecks both targets, builds client/server, and verifies the required production artifacts. `npm run smoke:server` boots the compiled Express app and verifies its health/API behavior.
+`npm run check` typechecks both TypeScript targets, builds the Vite client and Express host, and verifies production artifacts. `npm run smoke:server` starts the compiled server on a temporary port and validates its API contract.
 
-## Optional Firebase authentication
+## Firebase / Firestore final integration
 
-Copy `.env.example` to `.env` and provide credentials when you are ready to enable user identity:
+The UI and domain model are intentionally complete before cloud wiring. Firebase Authentication should provide identity, while Firestore should replace the local storage adapter for actual cross-device/shared trips.
+
+Configure the existing Firebase client seam with:
 
 ```env
 VITE_FIREBASE_API_KEY=
@@ -73,36 +138,55 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_APP_ID=
 ```
 
-Enable Google as a sign-in provider in Firebase Authentication. No Maps or Weather API keys are required for the current application.
+Enable Google Authentication and authorize the Render hostname.
 
-## Persistence boundary
+The hosted data model should persist at minimum:
 
-Itinerary items, expenses, packing state, saved places, and appearance preference are currently local-first so the product is immediately reviewable without account setup. Authentication is isolated in `src/firebase.ts`, appearance in `src/theme.ts`, USD display localization in `src/currency.ts`, while the Express host remains independent from browser state.
+- users
+- trips
+- trip members / roles / invitations
+- activities and votes
+- saved places
+- expenses, participants, and custom shares
+- packing items
+- trip notes
+- reservations
+- activity history
 
-For private user accounts and cross-device trip data, the remaining production integration is Firebase Authentication plus a hosted datastore such as Firestore keyed to the authenticated user. The current live demo intentionally keeps each browser’s trip changes self-contained.
+Firestore security rules must enforce trip membership and owner-only operations. Once cloud persistence is connected, pending local invitations become real invitations, collaborator changes synchronize between devices, and private trip links can resolve against authenticated membership.
 
-The server exposes:
+## External services
 
-- `GET /api/health` — service health and local-first/auth-ready mode
-- `GET /api/config` — non-secret Firebase, Open-Meteo, and OpenStreetMap integration information
+No Maps or Weather secret is required for the current app:
+
+- **Google Maps:** standard universal URLs for place search and directions
+- **Open-Meteo:** public geocoding and current-weather endpoints
+
+This keeps the recruiter-facing demo immediately usable without quotas, billing configuration, or exposed provider secrets.
+
+## Production API
+
+- `GET /api/health` — service readiness and local/auth-ready mode
+- `GET /api/config` — non-secret integration/currency/collaboration information
+- unknown `/api/*` — JSON `404`
 
 ## Engineering docs
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — client domain, sharing, auth, provider boundaries, persistence, and production data model
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — local/Render/Firebase deployment runbook and production migration path
-- [`docs/QA.md`](docs/QA.md) — itinerary, budget, sharing, auth, integration, mobile, API, and accessibility acceptance checklist
-- [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) — quick map of the files that own trip UI, persistence, auth, hosting, and deployment
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — collaborative domain, local/cloud boundary, roles, expense splitting, maps/weather, and deployment shape
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — local/Render/Firebase deployment runbook
+- [`docs/QA.md`](docs/QA.md) — functional, collaboration, mobile, map, budget, theme, and production acceptance checks
+- [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) — current source ownership map
 
 ## Deployment
 
-The production Render service tracks `main` with Auto-Deploy enabled. Each commit follows:
+The production Render service tracks `main` with Auto-Deploy enabled:
 
 ```text
 GitHub main → npm install → npm run check → Express host → /api/health → live
 ```
 
-CI uses the same `npm run check` contract, keeping local, CI, and Render verification aligned.
+GitHub Actions additionally runs the compiled-server smoke test before a commit is considered clean.
 
 ## Portfolio intent
 
-Wanderline is designed to show consumer-product engineering rather than another CRUD dashboard: visual hierarchy, persistent personalization, mobile responsiveness, time-sensitive UI, editable persistent state, budget calculations, USD localization, browser platform APIs, third-party data consumption without secret leakage, auth boundaries, and deployment-ready full-stack structure all live in one cohesive product.
+Wanderline demonstrates more than itinerary CRUD. The application models a consumer collaboration problem with multiple resources and permissions: personal/group trips, roles, suggestions and voting, shared financial calculations, responsibility assignment, global search, third-party data, Google Maps handoff, persistent personalization, responsive interaction design, error recovery, CI, and a clean migration path from a credential-free local product to authenticated real-time cloud collaboration.
