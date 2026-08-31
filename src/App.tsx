@@ -1,341 +1,418 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
+import type {FormEvent,ReactNode} from 'react';
 import {
-  MapPin,CalendarDays,WalletCards,Bookmark,Search,Plus,Plane,ChevronDown,
-  CloudSun,Navigation,Clock3,Euro,Check,MoreHorizontal,Menu,X,Camera,
-  Utensils,Landmark,TrainFront,ShoppingBag,Send,ArrowUpRight,Luggage,
-  Heart,Sun,CloudRain,Trash2,RotateCcw,Pencil,ExternalLink
+  Activity as ActivityIcon,Archive,ArrowRight,Bell,BookOpen,CalendarCheck2,CalendarDays,
+  Check,CheckCircle2,ChevronDown,Clock3,Copy,DollarSign,ExternalLink,FileText,Heart,
+  Hotel,Lightbulb,ListChecks,LogIn,Luggage,Map,MapPin,Menu,MessageCircle,MoreHorizontal,
+  Navigation,NotebookTabs,Plus,Receipt,RotateCcw,Search,Settings2,Share2,ShieldCheck,
+  Sparkles,Trash2,UserPlus,Users,Wallet,X
 } from 'lucide-react';
 import {firebaseReady,signInGoogle} from './firebase';
+import {openGoogleMaps} from './maps';
+import {loadWorkspace,resetWorkspace,saveWorkspace} from './storage';
+import {useDestinationWeather} from './weather';
+import {
+  balances,dateLabel,daysBetween,expenseShare,initials,memberName,money,minutesLabel,
+  tripDates,tripProgress
+} from './model';
+import type {
+  Activity,ActivityCategory,ActivityStatus,Expense,ExpenseCategory,MemberRole,PackingItem,
+  Reservation,ReservationType,SavedPlace,SplitMode,Trip,TripMember,TripNote,View,Workspace
+} from './model';
 
-type Activity={
-  id:string;day:number;time:string;title:string;place:string;
-  kind:'food'|'sight'|'transit'|'shop';cost:number;done:boolean;note:string;duration?:number
-};
-type Expense={id:string;label:string;category:string;amount:number};
-type Pack={id:string;label:string;done:boolean};
-type Place={id:string;name:string;category:string;neighborhood:string;note:string};
-type Persisted={activities:Activity[];expenses:Expense[];packing:Pack[];places?:Place[]};
-type WeatherState={temp:number;label:string};
+type ModalState=
+  |{type:'activity';id?:string;date?:string;sourcePlaceId?:string}
+  |{type:'place';id?:string}
+  |{type:'expense';id?:string}
+  |{type:'packing';id?:string}
+  |{type:'note';id?:string}
+  |{type:'reservation';id?:string}
+  |{type:'traveler'}
+  |{type:'trip';newTrip?:boolean}
+  |null;
 
-const STORE='wanderline-v1';
-const TRIP_START=new Date('2026-09-14T09:00:00');
-const BUDGET=1850;
+type SearchHit={id:string;label:string;detail:string;view:View};
 
-const initial:Activity[]=[
-  {id:'a1',day:1,time:'09:30',title:'Coffee & xuixo at Granja M. Viader',place:'El Raval',kind:'food',cost:18,done:true,note:'Start slowly after the overnight flight.',duration:75},
-  {id:'a2',day:1,time:'11:00',title:'Wander the Gothic Quarter',place:'Barri Gòtic',kind:'sight',cost:0,done:true,note:'Cathedral, hidden courtyards, Plaça Reial.',duration:120},
-  {id:'a3',day:1,time:'14:00',title:'Mercat de la Boqueria lunch',place:'La Rambla',kind:'food',cost:32,done:false,note:'Try pintxos and fresh juice.',duration:90},
-  {id:'a4',day:1,time:'17:00',title:'Golden hour at Bunkers del Carmel',place:'El Carmel',kind:'sight',cost:0,done:false,note:'Bring water. Sunset around 8:35 PM.',duration:120},
-  {id:'a5',day:2,time:'09:00',title:'Sagrada Família',place:'Eixample',kind:'sight',cost:58,done:false,note:'Tower entry booked. Arrive 20 minutes early.',duration:120},
-  {id:'a6',day:2,time:'12:30',title:'Lunch at Casa Lolea',place:'Sant Pere',kind:'food',cost:45,done:false,note:'Reservation under Noah.',duration:90},
-  {id:'a7',day:2,time:'15:00',title:'Park Güell & Gràcia walk',place:'Gràcia',kind:'sight',cost:26,done:false,note:'Take L3 then bus 24.',duration:150},
-  {id:'a8',day:3,time:'08:40',title:'Train to Montserrat',place:'Plaça d’Espanya',kind:'transit',cost:48,done:false,note:'R5 toward Manresa, then cable car.',duration:75},
-  {id:'a9',day:3,time:'10:30',title:'Montserrat monastery & trails',place:'Montserrat',kind:'sight',cost:0,done:false,note:'Choose Sant Miquel trail if weather is clear.',duration:240},
-  {id:'a10',day:4,time:'10:00',title:'Beach morning',place:'Barceloneta',kind:'sight',cost:0,done:false,note:'Easy final morning before checkout.',duration:120},
-  {id:'a11',day:4,time:'13:00',title:'Souvenirs & late lunch',place:'El Born',kind:'shop',cost:60,done:false,note:'Pick up ceramics and snacks for home.',duration:120}
+const navItems:[View,string,typeof CalendarDays][]=[
+  ['overview','Overview',Sparkles],
+  ['itinerary','Itinerary',CalendarDays],
+  ['ideas','Ideas',Lightbulb],
+  ['places','Saved places',MapPin],
+  ['budget','Budget',Wallet],
+  ['packing','Packing',Luggage],
+  ['notes','Notes & bookings',NotebookTabs],
+  ['travelers','Travelers',Users],
+  ['activity','Activity',ActivityIcon]
 ];
-
-const initialExpenses:Expense[]=[
-  {id:'e1',label:'Flights',category:'Transport',amount:620},
-  {id:'e2',label:'Hotel · 4 nights',category:'Stay',amount:548},
-  {id:'e3',label:'Sagrada Família',category:'Activities',amount:58},
-  {id:'e4',label:'Montserrat tickets',category:'Transport',amount:48},
-  {id:'e5',label:'Food allowance',category:'Food',amount:280}
-];
-
-const initialPack:Pack[]=[
-  {id:'p1',label:'Passports & IDs',done:true},
-  {id:'p2',label:'Phone chargers',done:true},
-  {id:'p3',label:'Walking shoes',done:false},
-  {id:'p4',label:'Sunscreen',done:false},
-  {id:'p5',label:'Light rain layer',done:false}
-];
-
-const initialPlaces:Place[]=[
-  {id:'s1',name:'Can Culleretes',category:'Catalan',neighborhood:'Barri Gòtic',note:'Loved by locals since 1786.'},
-  {id:'s2',name:'Casa Batlló',category:'Architecture',neighborhood:'Eixample',note:'Gaudí at his most surreal.'},
-  {id:'s3',name:'Paradiso',category:'Cocktails',neighborhood:'El Born',note:'Hidden behind a pastrami shop.'},
-  {id:'s4',name:'La Manual Alpargatera',category:'Shopping',neighborhood:'Gothic Quarter',note:'Handmade espadrilles since 1940.'},
-  {id:'s5',name:'Café Cometa',category:'Coffee',neighborhood:'Sant Antoni',note:'Bright, quiet, excellent brunch.'},
-  {id:'s6',name:'Jardins de Mossèn Costa',category:'Garden',neighborhood:'Montjuïc',note:'Cacti with harbor views.'}
-];
-
-function cloneInitial<T>(value:T):T{return structuredClone(value)}
-function loadSaved():Persisted|null{
-  try{
-    const value=JSON.parse(localStorage.getItem(STORE)||'null') as Persisted|null;
-    if(!value||!Array.isArray(value.activities)||!Array.isArray(value.expenses)||!Array.isArray(value.packing))return null;
-    return value;
-  }catch{return null}
-}
-function saveState(value:Persisted){try{localStorage.setItem(STORE,JSON.stringify(value))}catch{/* Keep the in-memory trip usable when browser storage is unavailable. */}}
-function countdownLabel(){
-  const diff=Math.ceil((TRIP_START.getTime()-Date.now())/86_400_000);
-  if(diff>1)return `Upcoming trip · ${diff} days`;
-  if(diff===1)return 'Upcoming trip · tomorrow';
-  if(diff===0)return 'Trip starts today';
-  return 'Trip archive';
-}
-function weatherLabel(code:number){
-  if(code===0)return 'Clear';
-  if(code<=3)return 'Partly cloudy';
-  if(code<=67)return 'Rain';
-  if(code<=77)return 'Snow';
-  if(code<=82)return 'Showers';
-  return 'Storms nearby';
-}
+const categories:ActivityCategory[]=['food','sight','transit','shopping','lodging','event','other'];
+const expenseCategories:ExpenseCategory[]=['Lodging','Food','Transportation','Activities','Shopping','Other'];
+const reservationTypes:ReservationType[]=['Flight','Hotel','Rental car','Restaurant','Event','Other'];
 
 export default function App(){
-  const cache=loadSaved();
-  const [activities,setActivities]=useState<Activity[]>(cache?.activities||cloneInitial(initial));
-  const [expenses,setExpenses]=useState<Expense[]>(cache?.expenses||cloneInitial(initialExpenses));
-  const [packing,setPacking]=useState<Pack[]>(cache?.packing||cloneInitial(initialPack));
-  const [places,setPlaces]=useState<Place[]>(cache?.places||cloneInitial(initialPlaces));
-  const [day,setDay]=useState(1);
-  const [tab,setTab]=useState<'itinerary'|'budget'|'saved'>('itinerary');
-  const [modal,setModal]=useState<'activity'|'expense'|'place'|null>(null);
-  const [editingActivity,setEditingActivity]=useState<Activity|null>(null);
-  const [selectedPlace,setSelectedPlace]=useState<Place|null>(null);
-  const [menu,setMenu]=useState(false);
+  const [workspace,setWorkspace]=useState<Workspace>(loadWorkspace);
+  const [view,setView]=useState<View>('overview');
+  const [selectedDate,setSelectedDate]=useState('');
+  const [menuOpen,setMenuOpen]=useState(false);
+  const [tripMenuOpen,setTripMenuOpen]=useState(false);
   const [query,setQuery]=useState('');
+  const [modal,setModal]=useState<ModalState>(null);
   const [toast,setToast]=useState('');
-  const [weather,setWeather]=useState<WeatherState>({temp:77,label:'Sunny'});
+  const searchRef=useRef<HTMLInputElement>(null);
 
-  useEffect(()=>saveState({activities,expenses,packing,places}),[activities,expenses,packing,places]);
+  const trip=workspace.trips.find(item=>item.id===workspace.activeTripId)??workspace.trips[0];
+  const currentMember=trip?.members.find(member=>member.id===workspace.currentUserId);
+  const canEdit=currentMember?.role!=='viewer';
+  const isOwner=currentMember?.role==='owner';
+  const weather=useDestinationWeather(trip?.destination??'Barcelona');
+  const dates=trip?tripDates(trip.startDate,trip.endDate):[];
+
+  useEffect(()=>saveWorkspace(workspace),[workspace]);
+  useEffect(()=>{
+    if(!trip)return;
+    if(!selectedDate||!dates.includes(selectedDate))setSelectedDate(dates[0]??trip.startDate);
+  },[trip?.id,trip?.startDate,trip?.endDate]);
   useEffect(()=>{
     if(!toast)return;
-    const timer=setTimeout(()=>setToast(''),2400);
-    return()=>clearTimeout(timer);
+    const timer=window.setTimeout(()=>setToast(''),2400);
+    return()=>window.clearTimeout(timer);
   },[toast]);
   useEffect(()=>{
-    let cancelled=false;
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=41.3874&longitude=2.1686&current=temperature_2m,weather_code&temperature_unit=fahrenheit')
-      .then(response=>response.ok?response.json():Promise.reject(new Error('weather unavailable')))
-      .then(data=>{if(!cancelled&&data?.current)setWeather({temp:Math.round(data.current.temperature_2m),label:weatherLabel(Number(data.current.weather_code))})})
-      .catch(()=>{/* Keep the polished fallback weather when the provider is unavailable. */});
-    return()=>{cancelled=true};
-  },[]);
-  useEffect(()=>{
     const onKey=(event:KeyboardEvent)=>{
+      if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){
+        event.preventDefault();searchRef.current?.focus();
+      }
       if(event.key==='Escape'){
-        if(selectedPlace)setSelectedPlace(null);
-        else if(modal){setModal(null);setEditingActivity(null)}
-        else if(menu)setMenu(false);
+        setModal(null);setMenuOpen(false);setTripMenuOpen(false);setQuery('');
       }
     };
     window.addEventListener('keydown',onKey);
     return()=>window.removeEventListener('keydown',onKey);
-  },[menu,modal,selectedPlace]);
+  },[]);
 
-  const q=query.trim().toLowerCase();
-  const dayItems=useMemo(()=>activities.filter(a=>a.day===day&&(!q||`${a.title} ${a.place} ${a.note} ${a.kind}`.toLowerCase().includes(q))).sort((a,b)=>a.time.localeCompare(b.time)),[activities,day,q]);
-  const visibleExpenses=useMemo(()=>expenses.filter(item=>!q||`${item.label} ${item.category}`.toLowerCase().includes(q)),[expenses,q]);
-  const visiblePlaces=useMemo(()=>places.filter(place=>!q||`${place.name} ${place.category} ${place.neighborhood} ${place.note}`.toLowerCase().includes(q)),[places,q]);
+  const updateTrip=(mutate:(current:Trip)=>Trip)=>{
+    if(!trip)return;
+    setWorkspace(current=>({...current,trips:current.trips.map(item=>item.id===trip.id?mutate(item):item)}));
+  };
+  const record=(next:Trip,text:string,memberId=workspace.currentUserId):Trip=>({
+    ...next,
+    history:[{id:crypto.randomUUID(),text,memberId,createdAt:new Date().toISOString()},...next.history].slice(0,100)
+  });
+  const mutateTrip=(text:string,mutate:(current:Trip)=>Trip)=>updateTrip(current=>record(mutate(current),text));
+  const chooseView=(next:View)=>{setView(next);setMenuOpen(false);setQuery('')};
+  const switchTrip=(id:string)=>{setWorkspace(current=>({...current,activeTripId:id}));setView('overview');setTripMenuOpen(false);setQuery('')};
 
-  const spent=expenses.reduce((sum,e)=>sum+e.amount,0);
-  const done=activities.filter(a=>a.done).length;
-  const progress=activities.length?Math.round(done/activities.length*100):0;
-  const packed=packing.filter(p=>p.done).length;
-  const packedPct=packing.length?packed/packing.length*100:0;
-  const days=[['Mon','Sep 14'],['Tue','Sep 15'],['Wed','Sep 16'],['Thu','Sep 17']];
+  const searchHits=useMemo<SearchHit[]>(()=>{
+    if(!trip||query.trim().length<2)return [];
+    const q=query.trim().toLowerCase();
+    const hits:SearchHit[]=[];
+    trip.activities.filter(item=>`${item.title} ${item.location} ${item.note}`.toLowerCase().includes(q)).forEach(item=>hits.push({id:item.id,label:item.title,detail:`${item.status} · ${dateLabel(item.date)}`,view:item.status==='suggested'?'ideas':'itinerary'}));
+    trip.places.filter(item=>`${item.name} ${item.category} ${item.neighborhood} ${item.note}`.toLowerCase().includes(q)).forEach(item=>hits.push({id:item.id,label:item.name,detail:`Saved place · ${item.neighborhood}`,view:'places'}));
+    trip.expenses.filter(item=>`${item.description} ${item.category}`.toLowerCase().includes(q)).forEach(item=>hits.push({id:item.id,label:item.description,detail:`Expense · ${money(item.amount)}`,view:'budget'}));
+    trip.notes.filter(item=>`${item.title} ${item.body}`.toLowerCase().includes(q)).forEach(item=>hits.push({id:item.id,label:item.title,detail:'Trip note',view:'notes'}));
+    trip.reservations.filter(item=>`${item.title} ${item.location} ${item.confirmation}`.toLowerCase().includes(q)).forEach(item=>hits.push({id:item.id,label:item.title,detail:`${item.type} · ${dateLabel(item.date)}`,view:'notes'}));
+    trip.members.filter(item=>`${item.name} ${item.email}`.toLowerCase().includes(q)).forEach(item=>hits.push({id:item.id,label:item.name,detail:`${item.role} · ${item.status}`,view:'travelers'}));
+    return hits.slice(0,8);
+  },[trip,query]);
 
-  const toggle=(id:string)=>setActivities(value=>value.map(a=>a.id===id?{...a,done:!a.done}:a));
-  const upsertActivity=(activity:Activity)=>{
-    setActivities(current=>current.some(item=>item.id===activity.id)?current.map(item=>item.id===activity.id?activity:item):[...current,activity]);
-    setModal(null);setEditingActivity(null);setToast(editingActivity?'Activity updated':'Added to itinerary');
-  };
-  const deleteActivity=(id:string)=>{
-    if(!window.confirm('Delete this activity from the itinerary?'))return;
-    setActivities(current=>current.filter(item=>item.id!==id));setModal(null);setEditingActivity(null);setToast('Activity deleted');
-  };
-  const deleteExpense=(id:string)=>{setExpenses(current=>current.filter(item=>item.id!==id));setToast('Expense removed')};
-  const deletePlace=(id:string)=>{
-    setPlaces(current=>current.filter(item=>item.id!==id));setSelectedPlace(null);setToast('Place removed');
-  };
-  const resetTrip=()=>{
-    if(!window.confirm('Reset Wanderline to the original Barcelona sample trip?'))return;
-    setActivities(cloneInitial(initial));setExpenses(cloneInitial(initialExpenses));setPacking(cloneInitial(initialPack));setPlaces(cloneInitial(initialPlaces));setDay(1);setTab('itinerary');setQuery('');setMenu(false);setToast('Trip reset');
+  if(!trip)return <div className="wl-empty-screen"><h1>No trips yet</h1><button onClick={()=>setModal({type:'trip',newTrip:true})}>Create your first trip</button></div>;
+
+  const activeMembers=trip.members.filter(member=>member.status==='active');
+  const pendingMembers=trip.members.filter(member=>member.status==='pending');
+  const spent=trip.expenses.reduce((sum,expense)=>sum+expense.amount,0);
+  const packed=trip.packing.filter(item=>item.done).length;
+  const confirmed=trip.activities.filter(item=>item.status==='confirmed'||item.status==='completed').length;
+  const openIdeas=trip.activities.filter(item=>item.status==='suggested').length;
+  const countdown=Math.ceil((Date.parse(`${trip.startDate}T00:00:00`)-Date.now())/86_400_000);
+
+  const shareTrip=async()=>{
+    const text=`${trip.name} — ${trip.destination}, ${dateLabel(trip.startDate,{month:'short',day:'numeric'})} to ${dateLabel(trip.endDate,{month:'short',day:'numeric',year:'numeric'})}`;
+    try{
+      if(navigator.share){await navigator.share({title:trip.name,text,url:window.location.href});return}
+      await navigator.clipboard.writeText(`${text}\n${window.location.href}`);setToast('Trip link copied');
+    }catch{/* Cancelling the native share sheet is not an error. */}
   };
   const signIn=async()=>{
-    if(!firebaseReady){setToast('Demo mode — add Firebase keys to enable Google sign-in');return}
+    if(!firebaseReady){setToast('Firebase is not linked yet — local collaborative demo mode is active');return}
     try{await signInGoogle();setToast('Signed in with Google')}
     catch{setToast('Google sign-in was cancelled or unavailable')}
   };
-  const shareTrip=async()=>{
-    const payload={title:'Wanderline · Barcelona',text:'Barcelona itinerary · Sep 14–18, 2026',url:window.location.href};
-    try{
-      if(navigator.share){await navigator.share(payload);setToast('Trip shared');return}
-      await navigator.clipboard.writeText(window.location.href);setToast('Trip link copied');
-    }catch{setToast('Sharing was cancelled or blocked')}
+  const doReset=()=>{
+    if(!window.confirm('Reset Wanderline to the original Barcelona sample trip?'))return;
+    setWorkspace(resetWorkspace());setView('overview');setQuery('');setToast('Sample workspace restored');
   };
-  const setActiveTab=(next:'itinerary'|'budget'|'saved')=>{setTab(next);setQuery('');setMenu(false)};
-  const searchPlaceholder=tab==='itinerary'?'Search this day’s places and notes…':tab==='budget'?'Search expenses and categories…':'Search saved places…';
 
-  return <div className="app">
-    <aside className={menu?'sidebar open':'sidebar'}>
-      <div className="logo"><span><Navigation/></span>wanderline</div>
-      <button className="trip-switch" onClick={()=>setToast('Barcelona · Sep 14–18, 2026')}>
-        <span className="trip-thumb">BCN</span><span><b>Barcelona</b><small>Sep 14–18 · 4 nights</small></span><ChevronDown/>
-      </button>
-      <nav>
-        <button className={tab==='itinerary'?'active':''} onClick={()=>setActiveTab('itinerary')}><CalendarDays/>Itinerary</button>
-        <button className={tab==='budget'?'active':''} onClick={()=>setActiveTab('budget')}><WalletCards/>Budget</button>
-        <button className={tab==='saved'?'active':''} onClick={()=>setActiveTab('saved')}><Bookmark/>Saved places <b>{places.length}</b></button>
-      </nav>
-      <div className="sidebar-title">Trip checklist</div>
-      <div className="packing">{packing.map(p=><button key={p.id} onClick={()=>setPacking(v=>v.map(x=>x.id===p.id?{...x,done:!x.done}:x))}><span className={p.done?'check done':'check'}>{p.done&&<Check/>}</span><span className={p.done?'strike':''}>{p.label}</span></button>)}</div>
-      <div className="trip-card"><div><Luggage/><span><b>{packed}/{packing.length} packed</b><small>{packed===packing.length?'Ready to go':'A few things left'}</small></span></div><div className="mini-progress"><i style={{width:`${packedPct}%`}}/></div></div>
-      <button className="reset-demo" onClick={resetTrip}><RotateCcw/>Reset sample trip</button>
-      <div className="profile" role="button" tabIndex={0} onClick={signIn} onKeyDown={e=>{if(e.key==='Enter'||e.key===' ')signIn()}} title={firebaseReady?'Sign in with Google':'Running in demo mode'}><span className="avatar">NR</span><span><b>Noah</b><small>{firebaseReady?'Google sign-in ready':'Trip owner · demo mode'}</small></span><MoreHorizontal/></div>
+  return <div className="wl-app">
+    <aside className={menuOpen?'wl-sidebar open':'wl-sidebar'}>
+      <div className="wl-brand"><span>↗</span><b>wanderline</b></div>
+      <div className="wl-trip-switcher">
+        <button className="wl-trip-button" onClick={()=>setTripMenuOpen(value=>!value)} aria-expanded={tripMenuOpen}>
+          <span className="wl-trip-code">{trip.destination.slice(0,3).toUpperCase()}</span>
+          <span><b>{trip.name}</b><small>{trip.destination}</small></span><ChevronDown size={16}/>
+        </button>
+        {tripMenuOpen&&<div className="wl-trip-menu">
+          {workspace.trips.filter(item=>!item.archived).map(item=><button key={item.id} className={item.id===trip.id?'active':''} onClick={()=>switchTrip(item.id)}><span>{item.destination.slice(0,3).toUpperCase()}</span><div><b>{item.name}</b><small>{dateLabel(item.startDate,{month:'short',day:'numeric'})} – {dateLabel(item.endDate,{month:'short',day:'numeric'})}</small></div>{item.id===trip.id&&<Check size={15}/>}</button>)}
+          <button className="wl-new-trip" onClick={()=>{setModal({type:'trip',newTrip:true});setTripMenuOpen(false)}}><Plus size={16}/> New trip</button>
+        </div>}
+      </div>
+      <nav className="wl-nav">{navItems.map(([id,label,Icon])=><button key={id} className={view===id?'active':''} onClick={()=>chooseView(id)}><Icon size={17}/><span>{label}</span>{id==='ideas'&&openIdeas>0&&<b>{openIdeas}</b>}{id==='travelers'&&pendingMembers.length>0&&<b>{pendingMembers.length}</b>}</button>)}</nav>
+      <div className="wl-sidebar-summary">
+        <span><Users size={15}/>{activeMembers.length} traveler{activeMembers.length===1?'':'s'}</span>
+        <span><ListChecks size={15}/>{packed}/{trip.packing.length} packed</span>
+        <span><DollarSign size={15}/>{money(Math.max(trip.budget-spent,0))} left</span>
+      </div>
+      <div className="wl-sidebar-bottom">
+        <button className="wl-reset" onClick={doReset}><RotateCcw size={14}/> Reset sample trip</button>
+        <button className="wl-profile" onClick={signIn}><span>{initials(currentMember?.name??'Traveler')}</span><div><b>{currentMember?.name??'Traveler'}</b><small>{firebaseReady?'Google sign-in ready':'Local demo mode'}</small></div><MoreHorizontal size={16}/></button>
+      </div>
     </aside>
 
-    <main>
-      <header>
-        <button className="mobile" onClick={()=>setMenu(value=>!value)} aria-label="Toggle trip navigation"><Menu/></button>
-        <div className="search"><Search/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={searchPlaceholder} aria-label={`Search ${tab}`}/></div>
-        <div className="weather"><CloudSun/><span><b>{weather.temp}°</b><small>Barcelona · {weather.label}</small></span></div>
-        <button className="share" onClick={shareTrip}><Send/>Share trip</button>
+    <main className="wl-main">
+      <header className="wl-header">
+        <button className="wl-mobile-menu" onClick={()=>setMenuOpen(value=>!value)} aria-label="Open navigation"><Menu/></button>
+        <div className="wl-search-wrap">
+          <div className="wl-search"><Search size={17}/><input ref={searchRef} value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search this trip…" aria-label="Search trip"/><kbd>⌘ K</kbd></div>
+          {searchHits.length>0&&<div className="wl-search-results">{searchHits.map(hit=><button key={`${hit.view}-${hit.id}`} onClick={()=>{setView(hit.view);setQuery('');setMenuOpen(false)}}><Search size={14}/><span><b>{hit.label}</b><small>{hit.detail}</small></span><ArrowRight size={14}/></button>)}</div>}
+        </div>
+        <div className="wl-header-actions">
+          <button className="wl-weather" title={weather.loading?'Loading current weather':weather.label}><span>{weather.temperature===null?'--':`${weather.temperature}°`}</span><small>{weather.loading?'Loading…':weather.label}</small></button>
+          <button className="wl-icon-button" onClick={()=>setToast('You’re all caught up')} aria-label="Notifications"><Bell size={18}/></button>
+          <button className="wl-share" onClick={()=>void shareTrip()}><Share2 size={16}/><span>Share trip</span></button>
+        </div>
       </header>
 
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="kicker"><Plane/>{countdownLabel()}</span>
-          <h1>Barcelona,<br/><em>slowly.</em></h1>
-          <p>Four days of architecture, tiny streets, long lunches, mountain air, and nowhere to rush.</p>
-          <div className="hero-meta"><span><CalendarDays/>Sep 14–18, 2026</span><span><MapPin/>Barcelona, Spain</span><span><Euro/>€{Math.max(BUDGET-spent,0).toLocaleString()} left</span></div>
-        </div>
-        <div className="postcard one"><span>41.3851° N</span><b>BARCELONA</b><small>Mediterranean coast</small></div>
-        <div className="postcard two"><Camera/><b>4 days</b><small>{activities.length} moments planned</small></div>
-      </section>
-
-      <div className="top-stats">
-        <div><span>Trip progress</span><b>{progress}%</b><div><i style={{width:`${progress}%`}}/></div></div>
-        <div><span>Budget used</span><b>€{spent.toLocaleString()}</b><small>of €{BUDGET.toLocaleString()}</small></div>
-        <div><span>Places saved</span><b>{places.length}</b><small>across Barcelona</small></div>
-        <div><span>Trip pace</span><b>Relaxed</b><small>{(activities.length/4).toFixed(1)} plans / day</small></div>
+      <div className="wl-page">
+        {view==='overview'&&<Overview trip={trip} countdown={countdown} spent={spent} packed={packed} confirmed={confirmed} currentUserId={workspace.currentUserId} onNavigate={chooseView} onTripSettings={()=>setModal({type:'trip'})} onAddActivity={()=>setModal({type:'activity',date:selectedDate})}/>} 
+        {view==='itinerary'&&<Itinerary trip={trip} selectedDate={selectedDate} setSelectedDate={setSelectedDate} currentUserId={workspace.currentUserId} canEdit={canEdit} onAdd={(date)=>setModal({type:'activity',date})} onEdit={(id)=>setModal({type:'activity',id})} onDelete={(id)=>{const activity=trip.activities.find(item=>item.id===id);if(activity&&window.confirm(`Delete “${activity.title}”?`))mutateTrip(`deleted ${activity.title}`,current=>({...current,activities:current.activities.filter(item=>item.id!==id)}))}} onStatus={(id,status)=>mutateTrip(`${status==='completed'?'completed':'updated'} ${trip.activities.find(item=>item.id===id)?.title??'an activity'}`,current=>({...current,activities:current.activities.map(item=>item.id===id?{...item,status}:item)}))}/>} 
+        {view==='ideas'&&<Ideas trip={trip} currentUserId={workspace.currentUserId} canEdit={canEdit} onAdd={()=>setModal({type:'activity',date:selectedDate})} onVote={(id)=>mutateTrip('voted on a trip idea',current=>({...current,activities:current.activities.map(item=>item.id===id?{...item,votes:item.votes.includes(workspace.currentUserId)?item.votes.filter(vote=>vote!==workspace.currentUserId):[...item.votes,workspace.currentUserId]}:item)}))} onPromote={(id,status)=>mutateTrip(`moved ${trip.activities.find(item=>item.id===id)?.title??'an idea'} into the itinerary`,current=>({...current,activities:current.activities.map(item=>item.id===id?{...item,status}:item)}))} onEdit={(id)=>setModal({type:'activity',id})}/>} 
+        {view==='places'&&<Places trip={trip} canEdit={canEdit} onAdd={()=>setModal({type:'place'})} onEdit={(id)=>setModal({type:'place',id})} onDelete={(id)=>{const place=trip.places.find(item=>item.id===id);if(place&&window.confirm(`Remove ${place.name} from saved places?`))mutateTrip(`removed ${place.name} from saved places`,current=>({...current,places:current.places.filter(item=>item.id!==id)}))}} onPlan={(id)=>setModal({type:'activity',date:selectedDate,sourcePlaceId:id})}/>} 
+        {view==='budget'&&<Budget trip={trip} currentUserId={workspace.currentUserId} canEdit={canEdit} onAdd={()=>setModal({type:'expense'})} onEdit={(id)=>setModal({type:'expense',id})} onDelete={(id)=>{const expense=trip.expenses.find(item=>item.id===id);if(expense&&window.confirm(`Delete ${expense.description}?`))mutateTrip(`deleted the ${expense.description} expense`,current=>({...current,expenses:current.expenses.filter(item=>item.id!==id)}))}}/>} 
+        {view==='packing'&&<Packing trip={trip} currentUserId={workspace.currentUserId} canEdit={canEdit} onAdd={()=>setModal({type:'packing'})} onToggle={(id)=>mutateTrip('updated the packing list',current=>({...current,packing:current.packing.map(item=>item.id===id?{...item,done:!item.done}:item)}))} onDelete={(id)=>mutateTrip('removed a packing item',current=>({...current,packing:current.packing.filter(item=>item.id!==id)}))}/>} 
+        {view==='notes'&&<NotesAndBookings trip={trip} canEdit={canEdit} onAddNote={()=>setModal({type:'note'})} onEditNote={(id)=>setModal({type:'note',id})} onDeleteNote={(id)=>mutateTrip('deleted a trip note',current=>({...current,notes:current.notes.filter(item=>item.id!==id)}))} onAddReservation={()=>setModal({type:'reservation'})} onEditReservation={(id)=>setModal({type:'reservation',id})} onDeleteReservation={(id)=>mutateTrip('deleted a reservation',current=>({...current,reservations:current.reservations.filter(item=>item.id!==id)}))}/>} 
+        {view==='travelers'&&<Travelers trip={trip} currentUserId={workspace.currentUserId} isOwner={isOwner} onInvite={()=>setModal({type:'traveler'})} onRole={(id,role)=>mutateTrip(`changed ${memberName(trip,id)} to ${role}`,current=>({...current,members:current.members.map(member=>member.id===id?{...member,role}:member)}))} onRemove={(id)=>{const member=trip.members.find(item=>item.id===id);if(member&&window.confirm(`Remove ${member.name} from this trip?`))mutateTrip(`removed ${member.name} from the trip`,current=>({...current,members:current.members.filter(item=>item.id!==id)}))}}/>} 
+        {view==='activity'&&<ActivityLog trip={trip}/>} 
       </div>
-
-      <section className="content">
-        {tab==='itinerary'&&<>
-          <div className="section-head"><div><span className="eyebrow">Your route</span><h2>Day by day</h2></div><button className="add" onClick={()=>{setEditingActivity(null);setModal('activity')}}><Plus/>Add activity</button></div>
-          <div className="day-tabs">{days.map((item,index)=><button key={index} className={day===index+1?'active':''} onClick={()=>setDay(index+1)}><span>{item[0]}</span><b>{item[1]}</b><small>{activities.filter(a=>a.day===index+1).length} plans</small></button>)}</div>
-          <div className="itinerary-grid">
-            <div className="timeline">
-              {dayItems.length===0&&<div className="empty">No activities match this search on day {day}.</div>}
-              {dayItems.map(a=><article key={a.id} className={a.done?'activity complete':'activity'}>
-                <div className="time">{a.time}<span/></div>
-                <button className="complete" aria-label={a.done?'Reopen activity':'Mark activity complete'} onClick={()=>{toggle(a.id);setToast(a.done?'Activity reopened':'Marked complete')}}>{a.done&&<Check/>}</button>
-                <div className="activity-card"><div className={`kind ${a.kind}`}>{icon(a.kind)}</div><div className="activity-main"><div><h3>{a.title}</h3><button aria-label={`Edit ${a.title}`} onClick={()=>{setEditingActivity(a);setModal('activity')}}><Pencil/></button></div><p><MapPin/>{a.place}</p><small>{a.note}</small><div className="activity-foot"><span><Clock3/>~{a.duration??90} min</span><span>{a.cost?`€${a.cost}`:'Free'}</span></div></div></div>
-              </article>)}
-            </div>
-            <RightPanel day={day} onToast={setToast}/>
-          </div>
-        </>}
-        {tab==='budget'&&<Budget expenses={expenses} visibleExpenses={visibleExpenses} budget={BUDGET} onAdd={()=>setModal('expense')} onDelete={deleteExpense}/>} 
-        {tab==='saved'&&<Saved places={visiblePlaces} total={places.length} onAdd={()=>setModal('place')} onOpen={setSelectedPlace}/>} 
-      </section>
     </main>
 
-    {modal==='activity'&&<ActivityModal day={day} initial={editingActivity} onClose={()=>{setModal(null);setEditingActivity(null)}} onSave={upsertActivity} onDelete={editingActivity?()=>deleteActivity(editingActivity.id):undefined}/>} 
-    {modal==='expense'&&<ExpenseModal onClose={()=>setModal(null)} onSave={expense=>{setExpenses(value=>[...value,expense]);setModal(null);setToast('Expense added')}}/>}
-    {modal==='place'&&<PlaceModal onClose={()=>setModal(null)} onSave={place=>{setPlaces(value=>[place,...value]);setModal(null);setToast('Place saved')}}/>}
-    {selectedPlace&&<PlaceDetails place={selectedPlace} onClose={()=>setSelectedPlace(null)} onDelete={()=>deletePlace(selectedPlace.id)}/>} 
-    {toast&&<div className="toast"><Check/>{toast}</div>}
-  </div>
+    {menuOpen&&<button className="wl-mobile-backdrop" onClick={()=>setMenuOpen(false)} aria-label="Close navigation"/>}
+    {modal&&<Modal onClose={()=>setModal(null)}>{renderModal(modal,{trip,workspace,canEdit,isOwner,setModal,setToast,setWorkspace,mutateTrip,record})}</Modal>}
+    {toast&&<div className="wl-toast"><CheckCircle2 size={17}/>{toast}</div>}
+  </div>;
 }
 
-function icon(kind:Activity['kind']){
-  return kind==='food'?<Utensils/>:kind==='transit'?<TrainFront/>:kind==='shop'?<ShoppingBag/>:<Landmark/>;
-}
-
-function RightPanel({day,onToast}:{day:number;onToast:(message:string)=>void}){
-  const weather=[
-    {icon:<Sun/>,temp:'78°',label:'Sunny'},
-    {icon:<CloudSun/>,temp:'76°',label:'Partly cloudy'},
-    {icon:<CloudRain/>,temp:'71°',label:'Light rain'},
-    {icon:<Sun/>,temp:'80°',label:'Clear'}
-  ][day-1];
-  const openMap=()=>window.open('https://www.openstreetmap.org/#map=13/41.3874/2.1686','_blank','noopener,noreferrer');
-  return <aside className="right">
-    <button className="map" onClick={openMap} aria-label="Open Barcelona map in OpenStreetMap"><div className="map-grid"/><span className="pin p1">1</span><span className="pin p2">2</span><span className="pin p3">3</span><div className="map-label"><MapPin/><span><b>Day {day} route</b><small>Open interactive Barcelona map</small></span><ExternalLink/></div></button>
-    <div className="weather-card"><div>{weather.icon}<span><b>{weather.temp}</b><small>{weather.label}</small></span></div><p>Walking-friendly forecast for this sample itinerary. Check the live header before heading out.</p></div>
-    <div className="note-card"><span className="eyebrow">Local note</span><h3>Dinner starts late.</h3><p>Most locals won’t sit down until 9 PM. Build in a vermouth or snack around 6:30 and enjoy the slower rhythm.</p><button onClick={()=>onToast('Barcelona tip saved mentally — enjoy the slower pace')}>More Barcelona tips <ArrowUpRight/></button></div>
-  </aside>
-}
-
-function Budget({expenses,visibleExpenses,budget,onAdd,onDelete}:{expenses:Expense[];visibleExpenses:Expense[];budget:number;onAdd:()=>void;onDelete:(id:string)=>void}){
-  const spent=expenses.reduce((sum,e)=>sum+e.amount,0);
-  const pct=budget?Math.min(spent/budget*100,100):0;
-  const categories=Object.entries(expenses.reduce<Record<string,number>>((map,e)=>({...map,[e.category]:(map[e.category]||0)+e.amount}),{}));
+type OverviewProps={trip:Trip;countdown:number;spent:number;packed:number;confirmed:number;currentUserId:string;onNavigate:(view:View)=>void;onTripSettings:()=>void;onAddActivity:()=>void};
+function Overview({trip,countdown,spent,packed,confirmed,currentUserId,onNavigate,onTripSettings,onAddActivity}:OverviewProps){
+  const next=[...trip.activities].filter(item=>item.status!=='suggested'&&item.status!=='completed').sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0,3);
+  const upcomingReservations=[...trip.reservations].sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0,2);
+  const progress=tripProgress(trip);
+  const budgetPct=Math.min(100,Math.round(spent/Math.max(trip.budget,1)*100));
   return <>
-    <div className="section-head"><div><span className="eyebrow">Money map</span><h2>Trip budget</h2></div><button className="add" onClick={onAdd}><Plus/>Add expense</button></div>
-    <div className="budget-hero"><div><span>Remaining</span><strong>€{Math.max(budget-spent,0).toLocaleString()}</strong><p>of €{budget.toLocaleString()} total budget</p></div><div className="ring" style={{background:`conic-gradient(#e36f4f 0 ${pct}%,#e7e1d6 ${pct}% 100%)`}}><span>{Math.round(pct)}%</span></div></div>
-    <div className="budget-grid"><div className="ledger"><div className="ledger-head"><h3>Expenses</h3><span>{visibleExpenses.length} shown · {expenses.length} total</span></div>{visibleExpenses.map(e=><div className="expense" key={e.id}><span className="expense-icon">€</span><div><b>{e.label}</b><small>{e.category}</small></div><strong>€{e.amount.toLocaleString()}</strong><button className="expense-delete" onClick={()=>onDelete(e.id)} aria-label={`Remove ${e.label}`}><Trash2/></button></div>)}{visibleExpenses.length===0&&<div className="empty">No expenses match this search.</div>}</div><div className="breakdown"><h3>By category</h3>{categories.map(([category,value])=><div key={category}><span>{category}</span><div><i style={{width:`${spent?value/spent*100:0}%`}}/></div><b>€{value.toLocaleString()}</b></div>)}</div></div>
-  </>
+    <section className="wl-hero">
+      <div className="wl-hero-copy"><span className="wl-kicker">{countdown>0?`${countdown} days to go`:countdown===0?'Trip starts today':'Trip in progress'}</span><h1>{trip.name}</h1><p>{trip.description}</p><div className="wl-hero-meta"><span><MapPin size={15}/>{trip.destination}</span><span><CalendarDays size={15}/>{dateLabel(trip.startDate,{month:'short',day:'numeric'})} – {dateLabel(trip.endDate,{month:'short',day:'numeric',year:'numeric'})}</span><span><Users size={15}/>{trip.members.filter(member=>member.status==='active').length} travelers</span></div></div>
+      <div className="wl-hero-actions"><button onClick={onAddActivity}><Plus size={16}/> Add plan</button><button className="secondary" onClick={onTripSettings}><Settings2 size={16}/> Trip settings</button></div>
+    </section>
+    <section className="wl-stat-grid">
+      <Stat label="Trip progress" value={`${progress}%`} note={`${confirmed} confirmed plans`} progress={progress}/>
+      <Stat label="Budget used" value={money(spent)} note={`${money(Math.max(trip.budget-spent,0))} remaining`} progress={budgetPct}/>
+      <Stat label="Packing" value={`${packed}/${trip.packing.length}`} note="items ready" progress={Math.round(packed/Math.max(trip.packing.length,1)*100)}/>
+      <Stat label="Ideas waiting" value={`${trip.activities.filter(item=>item.status==='suggested').length}`} note="ready for a group decision" progress={0}/>
+    </section>
+    <div className="wl-dashboard-grid">
+      <section className="wl-panel wl-next-plans"><PanelHead eyebrow="Coming up" title="Next on the itinerary" action={<button onClick={()=>onNavigate('itinerary')}>Full itinerary <ArrowRight size={14}/></button>}/>{next.map(item=><button className="wl-next-row" key={item.id} onClick={()=>openGoogleMaps(item.location,'directions')}><span className={`wl-category ${item.category}`}>{categoryIcon(item.category)}</span><div><b>{item.title}</b><small>{dateLabel(item.date)} · {displayTime(item.time)} · {item.location}</small></div><strong>{money(item.cost)}</strong><Navigation size={15}/></button>)}{next.length===0&&<Empty title="Nothing scheduled yet" text="Add your first confirmed plan to start shaping the trip."/>}</section>
+      <section className="wl-panel"><PanelHead eyebrow="Travel party" title="Who’s going" action={<button onClick={()=>onNavigate('travelers')}>Manage <ArrowRight size={14}/></button>}/><div className="wl-member-stack">{trip.members.filter(member=>member.status==='active').map(member=><div key={member.id}><Avatar member={member}/><span><b>{member.name}{member.id===currentUserId?' (you)':''}</b><small>{member.role}</small></span></div>)}</div>{trip.members.some(member=>member.status==='pending')&&<p className="wl-panel-note">{trip.members.filter(member=>member.status==='pending').length} invitation pending</p>}</section>
+      <section className="wl-panel"><PanelHead eyebrow="Bookings" title="Reservations" action={<button onClick={()=>onNavigate('notes')}>View all <ArrowRight size={14}/></button>}/><div className="wl-reservation-mini">{upcomingReservations.map(item=><button key={item.id} onClick={()=>openGoogleMaps(item.location)}><span>{reservationIcon(item.type)}</span><div><b>{item.title}</b><small>{dateLabel(item.date)} · {displayTime(item.time)}</small></div><ExternalLink size={14}/></button>)}</div></section>
+      <section className="wl-panel wl-together"><PanelHead eyebrow="Group planning" title="Decisions to make" action={<button onClick={()=>onNavigate('ideas')}>Open ideas <ArrowRight size={14}/></button>}/><div className="wl-decision-summary"><span><Heart size={20}/></span><div><strong>{trip.activities.filter(item=>item.status==='suggested').length}</strong><b>open suggestions</b><p>Vote on ideas together, then move the winners into the shared itinerary.</p></div></div></section>
+    </div>
+  </>;
 }
 
-function Saved({places,total,onAdd,onOpen}:{places:Place[];total:number;onAdd:()=>void;onOpen:(place:Place)=>void}){
-  return <>
-    <div className="section-head"><div><span className="eyebrow">Pocket list</span><h2>Saved places</h2><p className="section-sub">{total} places ready for the trip.</p></div><button className="add" onClick={onAdd}><Plus/>Save place</button></div>
-    {places.length===0&&<div className="empty">No saved places match this search.</div>}
-    <div className="saved-grid">{places.map((place,index)=><article key={place.id}><div className={`saved-img s${index%6+1}`}><Heart/><span>{String(index+1).padStart(2,'0')}</span></div><small>{place.category} · {place.neighborhood}</small><h3>{place.name}</h3><p>{place.note}</p><button onClick={()=>onOpen(place)}>View details <ArrowUpRight/></button></article>)}</div>
-  </>
+function Stat({label,value,note,progress}:{label:string;value:string;note:string;progress:number}){return <div className="wl-stat"><span>{label}</span><strong>{value}</strong><small>{note}</small>{progress>0&&<div><i style={{width:`${progress}%`}}/></div>}</div>}
+function PanelHead({eyebrow,title,action}:{eyebrow:string;title:string;action?:ReactNode}){return <div className="wl-panel-head"><div><span>{eyebrow}</span><h2>{title}</h2></div>{action}</div>}
+
+function Itinerary({trip,selectedDate,setSelectedDate,currentUserId,canEdit,onAdd,onEdit,onDelete,onStatus}:{trip:Trip;selectedDate:string;setSelectedDate:(date:string)=>void;currentUserId:string;canEdit:boolean;onAdd:(date:string)=>void;onEdit:(id:string)=>void;onDelete:(id:string)=>void;onStatus:(id:string,status:ActivityStatus)=>void}){
+  const dates=tripDates(trip.startDate,trip.endDate);
+  const dayItems=trip.activities.filter(item=>item.date===selectedDate&&item.status!=='suggested').sort((a,b)=>a.time.localeCompare(b.time));
+  return <Page title="Day by day" eyebrow="Your route" description="One clear timeline for the plans everyone has agreed to." action={canEdit?<button className="wl-primary" onClick={()=>onAdd(selectedDate)}><Plus size={16}/> Add activity</button>:undefined}>
+    <div className="wl-day-tabs">{dates.map((date,index)=><button key={date} className={date===selectedDate?'active':''} onClick={()=>setSelectedDate(date)}><small>Day {index+1}</small><b>{dateLabel(date,{weekday:'short',month:'short',day:'numeric'})}</b><span>{trip.activities.filter(item=>item.date===date&&item.status!=='suggested').length} plans</span></button>)}</div>
+    <div className="wl-itinerary-layout">
+      <section className="wl-timeline">
+        {dayItems.length===0&&<Empty title="This day is wide open" text="Add a confirmed plan, or promote one of the group’s ideas." action={canEdit?<button onClick={()=>onAdd(selectedDate)}>Add activity</button>:undefined}/>} 
+        {dayItems.map((item,index)=><div className="wl-timeline-row" key={item.id}>
+          <div className="wl-time"><b>{displayTime(item.time)}</b>{index<dayItems.length-1&&<i/>}</div>
+          <button className={`wl-status-dot ${item.status}`} onClick={()=>canEdit&&onStatus(item.id,item.status==='completed'?'confirmed':'completed')} aria-label={item.status==='completed'?'Mark incomplete':'Mark complete'}>{item.status==='completed'?<Check size={14}/>:<span/>}</button>
+          <article className={`wl-activity-card ${item.status==='completed'?'completed':''}`}>
+            <div className="wl-activity-top"><span className={`wl-category ${item.category}`}>{categoryIcon(item.category)}</span><div className="wl-activity-title"><div><StatusBadge status={item.status}/><small>Added by {memberName(trip,item.createdBy)}</small></div><h3>{item.title}</h3><button className="wl-location" onClick={()=>openGoogleMaps(item.location)}><MapPin size={13}/>{item.location}<ExternalLink size={12}/></button></div>{canEdit&&<div className="wl-card-actions"><button onClick={()=>onEdit(item.id)} aria-label="Edit activity"><Settings2 size={15}/></button><button onClick={()=>onDelete(item.id)} aria-label="Delete activity"><Trash2 size={15}/></button></div>}</div>
+            {item.note&&<p>{item.note}</p>}
+            <div className="wl-activity-foot"><span><Clock3 size={13}/>{minutesLabel(item.durationMinutes)}</span><span><DollarSign size={13}/>{item.cost===0?'Free':money(item.cost)}</span><span><Users size={13}/>{item.attendeeIds.length} going</span><button onClick={()=>openGoogleMaps(item.location,'directions')}><Navigation size={13}/> Directions</button></div>
+          </article>
+        </div>)}
+      </section>
+      <aside className="wl-day-aside">
+        <div className="wl-route-card"><div className="wl-route-art"><Map size={28}/><span>{dayItems.length}</span></div><h3>{dateLabel(selectedDate,{weekday:'long',month:'long',day:'numeric'})}</h3><p>{dayItems.length?`${dayItems.length} stops · ${money(dayItems.reduce((sum,item)=>sum+item.cost,0))} planned`:'No stops yet'}</p>{dayItems.length>0&&<button onClick={()=>openGoogleMaps(dayItems[0].location)}><Map size={15}/> Open first stop in Google Maps</button>}</div>
+        <div className="wl-day-team"><h3>Who’s going</h3><div>{trip.members.filter(member=>member.status==='active').map(member=><Avatar key={member.id} member={member} small/>)}</div><p>Your shared itinerary stays uncluttered; attendance and ownership live inside each plan.</p></div>
+        <div className="wl-tip-card"><span>Local rhythm</span><h3>Leave room between plans.</h3><p>Wanderline is intentionally better at showing a realistic day than cramming every saved place into the timeline.</p></div>
+      </aside>
+    </div>
+  </Page>;
 }
 
-function ActivityModal({day,initial,onClose,onSave,onDelete}:{day:number;initial:Activity|null;onClose:()=>void;onSave:(activity:Activity)=>void;onDelete?:()=>void}){
-  const [title,setTitle]=useState(initial?.title??'');
-  const [place,setPlace]=useState(initial?.place??'');
-  const [time,setTime]=useState(initial?.time??'12:00');
-  const [kind,setKind]=useState<Activity['kind']>(initial?.kind??'sight');
-  const [cost,setCost]=useState(String(initial?.cost??0));
-  const [duration,setDuration]=useState(String(initial?.duration??90));
-  const [note,setNote]=useState(initial?.note??'');
-  return <div className="overlay" onMouseDown={onClose}>
-    <form className="modal" onMouseDown={e=>e.stopPropagation()} onSubmit={e=>{e.preventDefault();if(title.trim())onSave({id:initial?.id??crypto.randomUUID(),day:initial?.day??day,time,title:title.trim(),place:place.trim()||'Barcelona',kind,cost:Math.max(Number(cost)||0,0),done:initial?.done??false,note:note.trim()||'Added to your trip.',duration:Math.max(Number(duration)||30,15)})}}>
-      <button type="button" className="close" onClick={onClose} aria-label="Close activity form"><X/></button>
-      <h2>{initial?'Edit activity':`Add to day ${day}`}</h2><p>{initial?'Update the plan without losing its completion state.':'Keep the plan useful, not overpacked.'}</p>
-      <label>Activity<input autoFocus required value={title} onChange={e=>setTitle(e.target.value)} placeholder="What do you want to do?"/></label>
-      <label>Place<input value={place} onChange={e=>setPlace(e.target.value)} placeholder="Neighborhood or venue"/></label>
-      <div className="form-row"><label>Time<input type="time" value={time} onChange={e=>setTime(e.target.value)}/></label><label>Type<select value={kind} onChange={e=>setKind(e.target.value as Activity['kind'])}><option value="sight">Sight</option><option value="food">Food</option><option value="transit">Transit</option><option value="shop">Shopping</option></select></label></div>
-      <div className="form-row"><label>Estimated cost (€)<input type="number" min="0" step="0.01" value={cost} onChange={e=>setCost(e.target.value)}/></label><label>Duration (min)<input type="number" min="15" step="15" value={duration} onChange={e=>setDuration(e.target.value)}/></label></div>
-      <label>Note<input value={note} onChange={e=>setNote(e.target.value)} placeholder="Reservation, route, or reminder"/></label>
-      <div className="modal-actions">{onDelete&&<button type="button" className="modal-delete" onClick={onDelete}><Trash2/>Delete</button>}<button className="modal-action">{initial?'Save changes':'Add activity'}</button></div>
-    </form>
-  </div>
+function Ideas({trip,currentUserId,canEdit,onAdd,onVote,onPromote,onEdit}:{trip:Trip;currentUserId:string;canEdit:boolean;onAdd:()=>void;onVote:(id:string)=>void;onPromote:(id:string,status:ActivityStatus)=>void;onEdit:(id:string)=>void}){
+  const ideas=trip.activities.filter(item=>item.status==='suggested').sort((a,b)=>b.votes.length-a.votes.length);
+  return <Page title="Ideas" eyebrow="Decide together" description="Suggest places and activities without cluttering the real itinerary until the group is ready." action={canEdit?<button className="wl-primary" onClick={onAdd}><Plus size={16}/> Suggest something</button>:undefined}>
+    <div className="wl-ideas-intro"><div><Heart size={22}/><span><b>Vote first. Plan second.</b><p>Suggestions stay here until an editor moves them into the shared day-by-day plan.</p></span></div><strong>{ideas.length} open</strong></div>
+    <div className="wl-idea-grid">{ideas.map(item=><article className="wl-idea-card" key={item.id}><div className="wl-idea-head"><span className={`wl-category ${item.category}`}>{categoryIcon(item.category)}</span><StatusBadge status="suggested"/>{canEdit&&<button onClick={()=>onEdit(item.id)}><Settings2 size={15}/></button>}</div><h3>{item.title}</h3><button className="wl-location" onClick={()=>openGoogleMaps(item.location)}><MapPin size={13}/>{item.location}</button><p>{item.note}</p><div className="wl-idea-meta"><span>{dateLabel(item.date)} · {displayTime(item.time)}</span><span>{money(item.cost)}</span><span>Suggested by {memberName(trip,item.createdBy)}</span></div><div className="wl-voters">{item.votes.map(id=>trip.members.find(member=>member.id===id)).filter((member):member is TripMember=>Boolean(member)).map(member=><Avatar member={member} small key={member.id}/>)}<span>{item.votes.length} vote{item.votes.length===1?'':'s'}</span></div><div className="wl-idea-actions"><button className={item.votes.includes(currentUserId)?'voted':''} onClick={()=>onVote(item.id)}><Heart size={15}/>{item.votes.includes(currentUserId)?'Voted':'Vote'}</button>{canEdit&&<><button onClick={()=>onPromote(item.id,'planned')}>Add to plan</button><button className="primary" onClick={()=>onPromote(item.id,'confirmed')}><Check size={15}/> Confirm</button></>}</div></article>)}{ideas.length===0&&<Empty title="No open suggestions" text="The group has made every decision for now."/>}</div>
+  </Page>;
 }
 
-function ExpenseModal({onClose,onSave}:{onClose:()=>void;onSave:(expense:Expense)=>void}){
-  const [label,setLabel]=useState('');
-  const [amount,setAmount]=useState('');
-  const [category,setCategory]=useState('Food');
-  return <div className="overlay" onMouseDown={onClose}>
-    <form className="modal" onMouseDown={e=>e.stopPropagation()} onSubmit={e=>{e.preventDefault();const value=Number(amount);if(label.trim()&&value>0)onSave({id:crypto.randomUUID(),label:label.trim(),category,amount:value})}}>
-      <button type="button" className="close" onClick={onClose} aria-label="Close expense form"><X/></button>
-      <h2>Add an expense</h2><p>Keep the trip budget honest without turning it into accounting.</p>
-      <label>Description<input autoFocus required value={label} onChange={e=>setLabel(e.target.value)} placeholder="e.g. Tapas dinner"/></label>
-      <div className="form-row"><label>Amount (€)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e=>setAmount(e.target.value)}/></label><label>Category<select value={category} onChange={e=>setCategory(e.target.value)}><option>Food</option><option>Stay</option><option>Transport</option><option>Activities</option><option>Shopping</option></select></label></div>
-      <button className="modal-action">Add expense</button>
-    </form>
-  </div>
+function Places({trip,canEdit,onAdd,onEdit,onDelete,onPlan}:{trip:Trip;canEdit:boolean;onAdd:()=>void;onEdit:(id:string)=>void;onDelete:(id:string)=>void;onPlan:(id:string)=>void}){
+  const [filter,setFilter]=useState('');
+  const places=trip.places.filter(place=>`${place.name} ${place.category} ${place.neighborhood} ${place.note}`.toLowerCase().includes(filter.toLowerCase()));
+  return <Page title="Saved places" eyebrow="Trip wishlist" description="Keep interesting spots here, then turn the ones you choose into real itinerary plans." action={canEdit?<button className="wl-primary" onClick={onAdd}><Plus size={16}/> Save a place</button>:undefined}>
+    <div className="wl-section-search"><Search size={16}/><input value={filter} onChange={event=>setFilter(event.target.value)} placeholder="Search saved places…"/></div>
+    <div className="wl-place-grid">{places.map(place=><article className="wl-place-card" key={place.id}><div className="wl-place-art"><MapPin/><span>{place.category}</span></div><div className="wl-place-body"><small>{place.neighborhood}</small><h3>{place.name}</h3><p>{place.note}</p><span>Saved by {memberName(trip,place.createdBy)}</span></div><div className="wl-place-actions"><button onClick={()=>openGoogleMaps(`${place.name}, ${trip.destination}`)}><Map size={15}/> Google Maps</button>{canEdit&&<button onClick={()=>onPlan(place.id)}><CalendarCheck2 size={15}/> Add to itinerary</button>}{canEdit&&<button className="icon" onClick={()=>onEdit(place.id)} aria-label="Edit saved place"><Settings2 size={15}/></button>}{canEdit&&<button className="icon danger" onClick={()=>onDelete(place.id)} aria-label="Remove saved place"><Trash2 size={15}/></button>}</div></article>)}{places.length===0&&<Empty title="No places match" text="Try a different search or save a new place."/>}</div>
+  </Page>;
 }
 
-function PlaceModal({onClose,onSave}:{onClose:()=>void;onSave:(place:Place)=>void}){
-  const [name,setName]=useState('');
-  const [category,setCategory]=useState('Food');
-  const [neighborhood,setNeighborhood]=useState('');
-  const [note,setNote]=useState('');
-  return <div className="overlay" onMouseDown={onClose}><form className="modal" onMouseDown={event=>event.stopPropagation()} onSubmit={event=>{event.preventDefault();if(name.trim())onSave({id:crypto.randomUUID(),name:name.trim(),category,neighborhood:neighborhood.trim()||'Barcelona',note:note.trim()||'Saved for later.'})}}>
-    <button type="button" className="close" onClick={onClose} aria-label="Close place form"><X/></button><h2>Save a place</h2><p>Keep restaurants, landmarks, shops, and quiet finds together.</p>
-    <label>Place name<input autoFocus required value={name} onChange={event=>setName(event.target.value)} placeholder="e.g. Museu Picasso"/></label>
-    <div className="form-row"><label>Category<input value={category} onChange={event=>setCategory(event.target.value)} placeholder="Museum"/></label><label>Neighborhood<input value={neighborhood} onChange={event=>setNeighborhood(event.target.value)} placeholder="El Born"/></label></div>
-    <label>Why save it?<input value={note} onChange={event=>setNote(event.target.value)} placeholder="What makes it worth remembering?"/></label>
-    <button className="modal-action">Save place</button>
-  </form></div>
+function Budget({trip,currentUserId,canEdit,onAdd,onEdit,onDelete}:{trip:Trip;currentUserId:string;canEdit:boolean;onAdd:()=>void;onEdit:(id:string)=>void;onDelete:(id:string)=>void}){
+  const [filter,setFilter]=useState('');
+  const spent=trip.expenses.reduce((sum,item)=>sum+item.amount,0);
+  const categoryTotals=expenseCategories.map(category=>({category,total:trip.expenses.filter(item=>item.category===category).reduce((sum,item)=>sum+item.amount,0)})).filter(item=>item.total>0);
+  const ledger=trip.expenses.filter(item=>`${item.description} ${item.category}`.toLowerCase().includes(filter.toLowerCase())).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const memberBalances=balances(trip);
+  const settlements=calculateSettlements(trip);
+  return <Page title="Budget" eyebrow="Money together" description="Track the trip in USD, including who paid and how shared costs should be split." action={canEdit?<button className="wl-primary" onClick={onAdd}><Plus size={16}/> Add expense</button>:undefined}>
+    <section className="wl-budget-hero"><div><span>Total trip budget</span><strong>{money(trip.budget)}</strong><p>{money(spent)} spent · {money(Math.max(trip.budget-spent,0))} remaining</p><div><i style={{width:`${Math.min(100,spent/Math.max(trip.budget,1)*100)}%`}}/></div></div><div className="wl-budget-ring" style={{'--budget-used':`${Math.min(100,spent/Math.max(trip.budget,1)*100)}%`} as React.CSSProperties}><span><b>{Math.round(spent/Math.max(trip.budget,1)*100)}%</b><small>used</small></span></div></section>
+    <div className="wl-budget-grid">
+      <section className="wl-panel"><PanelHead eyebrow="Ledger" title="Expenses"/><div className="wl-section-search compact"><Search size={15}/><input value={filter} onChange={event=>setFilter(event.target.value)} placeholder="Search expenses…"/></div><div className="wl-expense-list">{ledger.map(expense=><div className="wl-expense-row" key={expense.id}><span className="wl-expense-icon"><Receipt size={16}/></span><div><b>{expense.description}</b><small>{expense.category} · Paid by {memberName(trip,expense.paidBy)} · {splitLabel(expense,trip)}</small></div><strong>{money(expense.amount)}</strong>{canEdit&&<button onClick={()=>onEdit(expense.id)} aria-label="Edit expense"><Settings2 size={14}/></button>}{canEdit&&<button onClick={()=>onDelete(expense.id)} aria-label="Delete expense"><Trash2 size={14}/></button>}</div>)}</div></section>
+      <aside className="wl-budget-side">
+        <section className="wl-panel"><PanelHead eyebrow="Breakdown" title="By category"/><div className="wl-category-breakdown">{categoryTotals.map(item=><div key={item.category}><span><b>{item.category}</b><strong>{money(item.total)}</strong></span><div><i style={{width:`${item.total/Math.max(spent,1)*100}%`}}/></div></div>)}</div></section>
+        <section className="wl-panel"><PanelHead eyebrow="Group balances" title="Who owes whom"/><div className="wl-balance-list">{memberBalances.map(({member,paid,share,balance})=><div key={member.id}><Avatar member={member} small/><span><b>{member.name}{member.id===currentUserId?' (you)':''}</b><small>Paid {money(paid)} · Share {money(share)}</small></span><strong className={balance>=0?'positive':'negative'}>{balance>=0?'+':''}{money(balance)}</strong></div>)}</div><div className="wl-settlements">{settlements.length>0?settlements.map(item=><p key={`${item.from}-${item.to}`}><b>{memberName(trip,item.from)}</b> owes <b>{memberName(trip,item.to)}</b> {money(item.amount)}</p>):<p>Everyone is settled up.</p>}</div></section>
+      </aside>
+    </div>
+  </Page>;
 }
 
-function PlaceDetails({place,onClose,onDelete}:{place:Place;onClose:()=>void;onDelete:()=>void}){
-  const openMap=()=>window.open(`https://www.openstreetmap.org/search?query=${encodeURIComponent(`${place.name}, Barcelona`)}`,'_blank','noopener,noreferrer');
-  return <div className="overlay" onMouseDown={onClose}><section className="modal place-details" onMouseDown={event=>event.stopPropagation()}>
-    <button type="button" className="close" onClick={onClose} aria-label="Close place details"><X/></button><span className="detail-heart"><Heart/></span><small>{place.category} · {place.neighborhood}</small><h2>{place.name}</h2><p>{place.note}</p><div className="modal-actions"><button className="modal-delete" onClick={onDelete}><Trash2/>Remove</button><button className="modal-action" onClick={openMap}><MapPin/>Open map</button></div>
-  </section></div>
+function Packing({trip,currentUserId,canEdit,onAdd,onToggle,onDelete}:{trip:Trip;currentUserId:string;canEdit:boolean;onAdd:()=>void;onToggle:(id:string)=>void;onDelete:(id:string)=>void}){
+  const shared=trip.packing.filter(item=>item.scope==='shared');
+  const personal=trip.packing.filter(item=>item.scope==='personal'&&item.assignedTo===currentUserId);
+  return <Page title="Packing" eyebrow="Get ready" description="Keep personal items personal and make it obvious who is bringing shared gear." action={canEdit?<button className="wl-primary" onClick={onAdd}><Plus size={16}/> Add item</button>:undefined}>
+    <div className="wl-packing-progress"><span><Luggage size={20}/><div><b>{trip.packing.filter(item=>item.done).length} of {trip.packing.length} ready</b><small>A few things left before departure.</small></div></span><strong>{Math.round(trip.packing.filter(item=>item.done).length/Math.max(trip.packing.length,1)*100)}%</strong></div>
+    <div className="wl-packing-grid"><PackingGroup title="Shared trip items" subtitle="One person owns each item so the group doesn’t duplicate it." items={shared} trip={trip} canEdit={canEdit} onToggle={onToggle} onDelete={onDelete}/><PackingGroup title="My items" subtitle="Only the things assigned to you." items={personal} trip={trip} canEdit={canEdit} onToggle={onToggle} onDelete={onDelete}/></div>
+  </Page>;
 }
+function PackingGroup({title,subtitle,items,trip,canEdit,onToggle,onDelete}:{title:string;subtitle:string;items:PackingItem[];trip:Trip;canEdit:boolean;onToggle:(id:string)=>void;onDelete:(id:string)=>void}){return <section className="wl-panel"><PanelHead eyebrow="Checklist" title={title}/><p className="wl-panel-copy">{subtitle}</p><div className="wl-packing-list">{items.map(item=><div key={item.id} className={item.done?'done':''}><button className="wl-check" onClick={()=>onToggle(item.id)} disabled={!canEdit}>{item.done?<Check size={14}/>:null}</button><span><b>{item.label}</b><small>{item.scope==='shared'?`${memberName(trip,item.assignedTo)} is bringing this`:'Personal item'}</small></span>{canEdit&&<button className="wl-row-delete" onClick={()=>onDelete(item.id)} aria-label="Delete packing item"><Trash2 size={14}/></button>}</div>)}{items.length===0&&<Empty title="Nothing here yet" text="Add an item when something comes to mind."/>}</div></section>}
+
+function NotesAndBookings({trip,canEdit,onAddNote,onEditNote,onDeleteNote,onAddReservation,onEditReservation,onDeleteReservation}:{trip:Trip;canEdit:boolean;onAddNote:()=>void;onEditNote:(id:string)=>void;onDeleteNote:(id:string)=>void;onAddReservation:()=>void;onEditReservation:(id:string)=>void;onDeleteReservation:(id:string)=>void}){
+  return <Page title="Notes & bookings" eyebrow="Trip details" description="Keep the practical information everyone needs without stuffing it into the itinerary.">
+    <div className="wl-notes-grid">
+      <section><div className="wl-subhead"><div><span>Shared knowledge</span><h2>Trip notes</h2></div>{canEdit&&<button onClick={onAddNote}><Plus size={15}/> Add note</button>}</div><div className="wl-note-grid">{trip.notes.map(note=><article key={note.id}><div><FileText size={18}/><small>Updated {relativeDate(note.updatedAt)}</small></div><h3>{note.title}</h3><p>{note.body}</p><footer><span>By {memberName(trip,note.createdBy)}</span>{canEdit&&<><button onClick={()=>onEditNote(note.id)}>Edit</button><button onClick={()=>onDeleteNote(note.id)}>Delete</button></>}</footer></article>)}</div></section>
+      <section><div className="wl-subhead"><div><span>Confirmations</span><h2>Reservations</h2></div>{canEdit&&<button onClick={onAddReservation}><Plus size={15}/> Add booking</button>}</div><div className="wl-booking-list">{trip.reservations.sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map(item=><article key={item.id}><span className="wl-booking-icon">{reservationIcon(item.type)}</span><div><small>{item.type} · {dateLabel(item.date)} · {displayTime(item.time)}</small><h3>{item.title}</h3><button onClick={()=>openGoogleMaps(item.location)}><MapPin size={13}/>{item.location}</button>{item.confirmation&&<p><b>Confirmation:</b> {item.confirmation}</p>}{item.note&&<p>{item.note}</p>}</div><div>{canEdit&&<button onClick={()=>onEditReservation(item.id)}><Settings2 size={15}/></button>}{canEdit&&<button onClick={()=>onDeleteReservation(item.id)}><Trash2 size={15}/></button>}</div></article>)}</div></section>
+    </div>
+  </Page>;
+}
+
+function Travelers({trip,currentUserId,isOwner,onInvite,onRole,onRemove}:{trip:Trip;currentUserId:string;isOwner:boolean;onInvite:()=>void;onRole:(id:string,role:MemberRole)=>void;onRemove:(id:string)=>void}){
+  return <Page title="Travelers" eyebrow="Plan together" description="Invite the people coming with you and decide how much control each person should have." action={isOwner?<button className="wl-primary" onClick={onInvite}><UserPlus size={16}/> Invite traveler</button>:undefined}>
+    <div className="wl-role-guide"><div><ShieldCheck size={22}/><span><b>Owner</b><p>Full trip control, permissions, and deletion.</p></span></div><div><Settings2 size={22}/><span><b>Editor</b><p>Can change itinerary, budget, places, packing, and notes.</p></span></div><div><BookOpen size={22}/><span><b>Viewer</b><p>Can follow the trip without changing shared plans.</p></span></div></div>
+    <section className="wl-panel"><PanelHead eyebrow="Trip members" title={`${trip.members.filter(member=>member.status==='active').length} active · ${trip.members.filter(member=>member.status==='pending').length} pending`}/><div className="wl-traveler-list">{trip.members.map(member=><div key={member.id} className={member.status==='pending'?'pending':''}><Avatar member={member}/><span><b>{member.name}{member.id===currentUserId?' (you)':''}</b><small>{member.email} · {member.status==='pending'?'Invitation pending':'Joined trip'}</small></span>{isOwner&&member.id!==currentUserId?<select value={member.role} onChange={event=>onRole(member.id,event.target.value as MemberRole)} disabled={member.status==='pending'}><option value="editor">Editor</option><option value="viewer">Viewer</option></select>:<strong>{member.role}</strong>}{isOwner&&member.id!==currentUserId&&<button onClick={()=>onRemove(member.id)} aria-label={`Remove ${member.name}`}><Trash2 size={15}/></button>}</div>)}</div></section>
+  </Page>;
+}
+
+function ActivityLog({trip}:{trip:Trip}){return <Page title="Activity" eyebrow="What changed" description="A lightweight history makes collaborative trips easier to follow without checking every section."><section className="wl-panel"><div className="wl-history">{trip.history.map(event=><div key={event.id}><Avatar member={trip.members.find(member=>member.id===event.memberId)??{id:'unknown',name:'Traveler',email:'',initials:'?',role:'viewer',status:'active'}} small/><span><p><b>{memberName(trip,event.memberId)}</b> {event.text}</p><small>{relativeDate(event.createdAt)}</small></span></div>)}</div></section></Page>}
+
+function Page({title,eyebrow,description,action,children}:{title:string;eyebrow:string;description:string;action?:ReactNode;children:ReactNode}){return <div className="wl-page-inner"><div className="wl-page-head"><div><span>{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>{action}</div>{children}</div>}
+function Empty({title,text,action}:{title:string;text:string;action?:ReactNode}){return <div className="wl-empty"><Sparkles size={20}/><b>{title}</b><p>{text}</p>{action}</div>}
+function Avatar({member,small=false}:{member:TripMember;small?:boolean}){return <span className={small?'wl-avatar small':'wl-avatar'} title={member.name}>{member.initials}</span>}
+function StatusBadge({status}:{status:ActivityStatus}){return <span className={`wl-status ${status}`}>{status}</span>}
+function categoryIcon(category:ActivityCategory){const glyph:Record<ActivityCategory,string>={food:'☕',sight:'◇',transit:'↗',shopping:'◌',lodging:'⌂',event:'✦',other:'•'};return glyph[category]}
+function reservationIcon(type:ReservationType){if(type==='Hotel')return <Hotel size={17}/>;if(type==='Flight')return <span>✈</span>;return <CalendarCheck2 size={17}/>}
+function displayTime(value:string){const [hour,minute]=value.split(':').map(Number);return new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',timeZone:'UTC'}).format(new Date(Date.UTC(2026,0,1,hour,minute)))}
+function relativeDate(value:string){const days=Math.floor((Date.now()-Date.parse(value))/86_400_000);if(days<=0)return 'today';if(days===1)return 'yesterday';if(days<7)return `${days} days ago`;return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric'}).format(new Date(value))}
+function splitLabel(expense:Expense,trip:Trip){if(expense.splitMode==='personal')return 'Personal';if(expense.splitMode==='custom')return `Custom split · ${expense.participantIds.length} travelers`;return `Split equally · ${expense.participantIds.length} travelers`}
+function calculateSettlements(trip:Trip){
+  const rows=balances(trip).map(row=>({id:row.member.id,balance:row.balance}));
+  const debtors=rows.filter(row=>row.balance<-.01).map(row=>({...row,balance:-row.balance}));
+  const creditors=rows.filter(row=>row.balance>.01).map(row=>({...row}));
+  const result:Array<{from:string;to:string;amount:number}>=[];
+  let d=0,c=0;
+  while(d<debtors.length&&c<creditors.length){const amount=Math.min(debtors[d].balance,creditors[c].balance);if(amount>.01)result.push({from:debtors[d].id,to:creditors[c].id,amount});debtors[d].balance-=amount;creditors[c].balance-=amount;if(debtors[d].balance<=.01)d++;if(creditors[c].balance<=.01)c++}
+  return result;
+}
+
+function Modal({onClose,children}:{onClose:()=>void;children:ReactNode}){return <div className="wl-overlay" onMouseDown={onClose}><div className="wl-modal" onMouseDown={event=>event.stopPropagation()}><button className="wl-modal-close" onClick={onClose} aria-label="Close"><X/></button>{children}</div></div>}
+
+type ModalContext={trip:Trip;workspace:Workspace;canEdit:boolean;isOwner:boolean;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;setWorkspace:(value:Workspace|((current:Workspace)=>Workspace))=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void;record:(next:Trip,text:string,memberId?:string)=>Trip};
+function renderModal(modal:Exclude<ModalState,null>,context:ModalContext){
+  if(modal.type==='activity')return <ActivityForm {...context} modal={modal}/>;
+  if(modal.type==='place')return <PlaceForm {...context} id={modal.id}/>;
+  if(modal.type==='expense')return <ExpenseForm {...context} id={modal.id}/>;
+  if(modal.type==='packing')return <PackingForm {...context} id={modal.id}/>;
+  if(modal.type==='note')return <NoteForm {...context} id={modal.id}/>;
+  if(modal.type==='reservation')return <ReservationForm {...context} id={modal.id}/>;
+  if(modal.type==='traveler')return <TravelerForm {...context}/>;
+  return <TripForm {...context} newTrip={modal.newTrip}/>;
+}
+
+function ActivityForm({trip,workspace,modal,setModal,setToast,mutateTrip}:{trip:Trip;workspace:Workspace;modal:{type:'activity';id?:string;date?:string;sourcePlaceId?:string};setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const existing=modal.id?trip.activities.find(item=>item.id===modal.id):undefined;
+  const source=modal.sourcePlaceId?trip.places.find(item=>item.id===modal.sourcePlaceId):undefined;
+  const [title,setTitle]=useState(existing?.title??source?.name??'');
+  const [location,setLocation]=useState(existing?.location??(source?`${source.name}, ${trip.destination}`:''));
+  const [date,setDate]=useState(existing?.date??modal.date??trip.startDate);
+  const [time,setTime]=useState(existing?.time??'10:00');
+  const [category,setCategory]=useState<ActivityCategory>(existing?.category??'sight');
+  const [duration,setDuration]=useState(String(existing?.durationMinutes??90));
+  const [cost,setCost]=useState(String(existing?.cost??0));
+  const [note,setNote]=useState(existing?.note??source?.note??'');
+  const [status,setStatus]=useState<ActivityStatus>(existing?.status??(source?'planned':'planned'));
+  const [attendees,setAttendees]=useState<string[]>(existing?.attendeeIds??trip.members.filter(member=>member.status==='active').map(member=>member.id));
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim()||!location.trim())return;const item:Activity={id:existing?.id??crypto.randomUUID(),title:title.trim(),location:location.trim(),date,time,category,durationMinutes:Math.max(15,Number(duration)||15),cost:Math.max(0,Number(cost)||0),note:note.trim(),status,createdBy:existing?.createdBy??workspace.currentUserId,attendeeIds:attendees,votes:existing?.votes??[]};mutateTrip(`${existing?'updated':'added'} ${item.title}`,current=>({...current,activities:existing?current.activities.map(value=>value.id===item.id?item:value):[...current.activities,item]}));setModal(null);setToast(existing?'Activity updated':status==='suggested'?'Idea suggested':'Activity added')};
+  return <form onSubmit={submit}><FormTitle icon={<CalendarDays/>} title={existing?'Edit activity':source?'Plan this place':'Add an activity'} text="Keep one clear card per plan. Suggestions can stay in Ideas until the group agrees."/><label>Title<input autoFocus required value={title} onChange={event=>setTitle(event.target.value)}/></label><label>Location<input required value={location} onChange={event=>setLocation(event.target.value)} placeholder="Place or address"/></label><div className="wl-form-grid"><label>Date<input type="date" min={trip.startDate} max={trip.endDate} value={date} onChange={event=>setDate(event.target.value)}/></label><label>Time<input type="time" value={time} onChange={event=>setTime(event.target.value)}/></label></div><div className="wl-form-grid"><label>Category<select value={category} onChange={event=>setCategory(event.target.value as ActivityCategory)}>{categories.map(item=><option key={item} value={item}>{item}</option>)}</select></label><label>Status<select value={status} onChange={event=>setStatus(event.target.value as ActivityStatus)}><option value="suggested">Suggested idea</option><option value="planned">Planned</option><option value="confirmed">Confirmed</option>{existing&&<option value="completed">Completed</option>}</select></label></div><div className="wl-form-grid"><label>Duration (minutes)<input type="number" min="15" step="15" value={duration} onChange={event=>setDuration(event.target.value)}/></label><label>Estimated cost (USD)<input type="number" min="0" step="0.01" value={cost} onChange={event=>setCost(event.target.value)}/></label></div><label>Notes<textarea value={note} onChange={event=>setNote(event.target.value)} placeholder="Timing, tickets, what to bring, or why it matters"/></label><fieldset><legend>Who’s going?</legend><div className="wl-check-grid">{trip.members.filter(member=>member.status==='active').map(member=><label className="wl-check-option" key={member.id}><input type="checkbox" checked={attendees.includes(member.id)} onChange={()=>setAttendees(current=>current.includes(member.id)?current.filter(id=>id!==member.id):[...current,member.id])}/><Avatar member={member} small/><span>{member.name}</span></label>)}</div></fieldset><button className="wl-form-submit">{existing?'Save changes':status==='suggested'?'Add idea':'Add to trip'}</button></form>;
+}
+
+function PlaceForm({trip,workspace,id,setModal,setToast,mutateTrip}:{trip:Trip;workspace:Workspace;id?:string;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const existing=id?trip.places.find(item=>item.id===id):undefined;
+  const [name,setName]=useState(existing?.name??'');const [category,setCategory]=useState(existing?.category??'Restaurant');const [neighborhood,setNeighborhood]=useState(existing?.neighborhood??'');const [note,setNote]=useState(existing?.note??'');
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!name.trim())return;const item:SavedPlace={id:existing?.id??crypto.randomUUID(),name:name.trim(),category:category.trim()||'Place',neighborhood:neighborhood.trim(),note:note.trim(),createdBy:existing?.createdBy??workspace.currentUserId};mutateTrip(`${existing?'updated':'saved'} ${item.name}`,current=>({...current,places:existing?current.places.map(value=>value.id===item.id?item:value):[item,...current.places]}));setModal(null);setToast(existing?'Saved place updated':'Place saved')};
+  return <form onSubmit={submit}><FormTitle icon={<MapPin/>} title={existing?'Edit saved place':'Save a place'} text="Keep the wishlist separate from the confirmed itinerary."/><label>Name<input autoFocus required value={name} onChange={event=>setName(event.target.value)} placeholder="Restaurant, landmark, shop…"/></label><div className="wl-form-grid"><label>Category<input value={category} onChange={event=>setCategory(event.target.value)} /></label><label>Neighborhood<input value={neighborhood} onChange={event=>setNeighborhood(event.target.value)}/></label></div><label>Why save it?<textarea value={note} onChange={event=>setNote(event.target.value)} placeholder="What makes this worth remembering?"/></label><button className="wl-form-submit">{existing?'Save changes':'Save place'}</button></form>;
+}
+
+function ExpenseForm({trip,workspace,id,setModal,setToast,mutateTrip}:{trip:Trip;workspace:Workspace;id?:string;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const existing=id?trip.expenses.find(item=>item.id===id):undefined;const members=trip.members.filter(member=>member.status==='active');
+  const [description,setDescription]=useState(existing?.description??'');const [amount,setAmount]=useState(String(existing?.amount??''));const [category,setCategory]=useState<ExpenseCategory>(existing?.category??'Food');const [paidBy,setPaidBy]=useState(existing?.paidBy??workspace.currentUserId);const [participants,setParticipants]=useState<string[]>(existing?.participantIds??members.map(member=>member.id));const [mode,setMode]=useState<SplitMode>(existing?.splitMode??'equal');const [shares,setShares]=useState<Record<string,string>>(()=>Object.fromEntries(participants.map(memberId=>[memberId,String(existing?.customShares?.[memberId]??'')])));
+  const numericAmount=Math.max(0,Number(amount)||0);const customTotal=participants.reduce((sum,id)=>sum+(Number(shares[id])||0),0);const customValid=mode!=='custom'||Math.abs(customTotal-numericAmount)<.01;
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!description.trim()||numericAmount<=0||participants.length===0||!customValid)return;const item:Expense={id:existing?.id??crypto.randomUUID(),description:description.trim(),amount:numericAmount,category,paidBy,participantIds:mode==='personal'?[paidBy]:participants,splitMode:mode,customShares:mode==='custom'?Object.fromEntries(participants.map(memberId=>[memberId,Math.max(0,Number(shares[memberId])||0)])):undefined,createdAt:existing?.createdAt??new Date().toISOString()};mutateTrip(`${existing?'updated':'added'} the ${item.description} expense`,current=>({...current,expenses:existing?current.expenses.map(value=>value.id===item.id?item:value):[item,...current.expenses]}));setModal(null);setToast(existing?'Expense updated':'Expense added')};
+  return <form onSubmit={submit}><FormTitle icon={<Receipt/>} title={existing?'Edit expense':'Add an expense'} text="Track who paid and who actually shares the cost."/><label>Description<input autoFocus required value={description} onChange={event=>setDescription(event.target.value)}/></label><div className="wl-form-grid"><label>Amount (USD)<input type="number" min="0.01" step="0.01" required value={amount} onChange={event=>setAmount(event.target.value)}/></label><label>Category<select value={category} onChange={event=>setCategory(event.target.value as ExpenseCategory)}>{expenseCategories.map(item=><option key={item}>{item}</option>)}</select></label></div><div className="wl-form-grid"><label>Paid by<select value={paidBy} onChange={event=>setPaidBy(event.target.value)}>{members.map(member=><option key={member.id} value={member.id}>{member.name}</option>)}</select></label><label>Split<select value={mode} onChange={event=>setMode(event.target.value as SplitMode)}><option value="personal">Personal expense</option><option value="equal">Split equally</option><option value="custom">Custom amounts</option></select></label></div>{mode!=='personal'&&<fieldset><legend>Who shares this?</legend><div className="wl-check-grid">{members.map(member=><label className="wl-check-option" key={member.id}><input type="checkbox" checked={participants.includes(member.id)} onChange={()=>setParticipants(current=>current.includes(member.id)?current.filter(value=>value!==member.id):[...current,member.id])}/><Avatar member={member} small/><span>{member.name}</span></label>)}</div></fieldset>}{mode==='custom'&&<div className="wl-custom-splits"><p>Custom amounts must add up to {money(numericAmount)}.</p>{participants.map(memberId=><label key={memberId}>{memberName(trip,memberId)}<input type="number" min="0" step="0.01" value={shares[memberId]??''} onChange={event=>setShares(current=>({...current,[memberId]:event.target.value}))}/></label>)}<strong className={customValid?'valid':'invalid'}>{money(customTotal)} / {money(numericAmount)}</strong></div>}<button className="wl-form-submit" disabled={!customValid}>Save expense</button></form>;
+}
+
+function PackingForm({trip,workspace,setModal,setToast,mutateTrip}:{trip:Trip;workspace:Workspace;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const [label,setLabel]=useState('');const [scope,setScope]=useState<'personal'|'shared'>('shared');const [assignedTo,setAssignedTo]=useState(workspace.currentUserId);
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!label.trim())return;const item:PackingItem={id:crypto.randomUUID(),label:label.trim(),scope,assignedTo,done:false};mutateTrip(`added ${item.label} to packing`,current=>({...current,packing:[...current.packing,item]}));setModal(null);setToast('Packing item added')};
+  return <form onSubmit={submit}><FormTitle icon={<Luggage/>} title="Add packing item" text="Shared items have one owner so nobody assumes someone else packed it."/><label>Item<input autoFocus required value={label} onChange={event=>setLabel(event.target.value)}/></label><div className="wl-form-grid"><label>Type<select value={scope} onChange={event=>setScope(event.target.value as 'personal'|'shared')}><option value="shared">Shared trip item</option><option value="personal">Personal item</option></select></label><label>Who’s bringing it?<select value={assignedTo} onChange={event=>setAssignedTo(event.target.value)}>{trip.members.filter(member=>member.status==='active').map(member=><option key={member.id} value={member.id}>{member.name}</option>)}</select></label></div><button className="wl-form-submit">Add item</button></form>;
+}
+
+function NoteForm({trip,workspace,id,setModal,setToast,mutateTrip}:{trip:Trip;workspace:Workspace;id?:string;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const existing=id?trip.notes.find(item=>item.id===id):undefined;const [title,setTitle]=useState(existing?.title??'');const [body,setBody]=useState(existing?.body??'');
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim()||!body.trim())return;const item:TripNote={id:existing?.id??crypto.randomUUID(),title:title.trim(),body:body.trim(),createdBy:existing?.createdBy??workspace.currentUserId,updatedAt:new Date().toISOString()};mutateTrip(`${existing?'updated':'added'} the ${item.title} note`,current=>({...current,notes:existing?current.notes.map(value=>value.id===item.id?item:value):[item,...current.notes]}));setModal(null);setToast(existing?'Note updated':'Note added')};
+  return <form onSubmit={submit}><FormTitle icon={<MessageCircle/>} title={existing?'Edit note':'Add trip note'} text="Store useful group context that doesn’t belong on a specific activity."/><label>Title<input autoFocus required value={title} onChange={event=>setTitle(event.target.value)}/></label><label>Note<textarea required value={body} onChange={event=>setBody(event.target.value)}/></label><button className="wl-form-submit">Save note</button></form>;
+}
+
+function ReservationForm({trip,id,setModal,setToast,mutateTrip}:{trip:Trip;id?:string;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const existing=id?trip.reservations.find(item=>item.id===id):undefined;const [type,setType]=useState<ReservationType>(existing?.type??'Hotel');const [title,setTitle]=useState(existing?.title??'');const [date,setDate]=useState(existing?.date??trip.startDate);const [time,setTime]=useState(existing?.time??'15:00');const [location,setLocation]=useState(existing?.location??'');const [confirmation,setConfirmation]=useState(existing?.confirmation??'');const [note,setNote]=useState(existing?.note??'');
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!title.trim())return;const item:Reservation={id:existing?.id??crypto.randomUUID(),type,title:title.trim(),date,time,location:location.trim(),confirmation:confirmation.trim(),note:note.trim()};mutateTrip(`${existing?'updated':'added'} the ${item.title} reservation`,current=>({...current,reservations:existing?current.reservations.map(value=>value.id===item.id?item:value):[...current.reservations,item]}));setModal(null);setToast(existing?'Reservation updated':'Reservation added')};
+  return <form onSubmit={submit}><FormTitle icon={<CalendarCheck2/>} title={existing?'Edit booking':'Add booking'} text="Keep confirmations and practical details available to everyone on the trip."/><div className="wl-form-grid"><label>Type<select value={type} onChange={event=>setType(event.target.value as ReservationType)}>{reservationTypes.map(item=><option key={item}>{item}</option>)}</select></label><label>Title<input required value={title} onChange={event=>setTitle(event.target.value)}/></label></div><div className="wl-form-grid"><label>Date<input type="date" value={date} onChange={event=>setDate(event.target.value)}/></label><label>Time<input type="time" value={time} onChange={event=>setTime(event.target.value)}/></label></div><label>Location<input value={location} onChange={event=>setLocation(event.target.value)}/></label><label>Confirmation/reference<input value={confirmation} onChange={event=>setConfirmation(event.target.value)}/></label><label>Notes<textarea value={note} onChange={event=>setNote(event.target.value)}/></label><button className="wl-form-submit">Save booking</button></form>;
+}
+
+function TravelerForm({trip,setModal,setToast,mutateTrip}:{trip:Trip;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;mutateTrip:(text:string,mutate:(current:Trip)=>Trip)=>void}){
+  const [email,setEmail]=useState('');const [name,setName]=useState('');const [role,setRole]=useState<MemberRole>('editor');
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!email.trim())return;const cleanEmail=email.trim().toLowerCase();if(trip.members.some(member=>member.email.toLowerCase()===cleanEmail)){setToast('That traveler is already invited');return}const member:TripMember={id:crypto.randomUUID(),name:name.trim()||cleanEmail.split('@')[0],email:cleanEmail,initials:initials(name.trim()||cleanEmail.split('@')[0]),role,status:'pending'};mutateTrip(`invited ${member.name} as ${role}`,current=>({...current,members:[...current.members,member]}));setModal(null);setToast('Invitation added — Firebase will send real invites once connected')};
+  return <form onSubmit={submit}><FormTitle icon={<UserPlus/>} title="Invite a traveler" text="The local demo records pending invitations now; Firebase will turn this into real account invitations later."/><label>Email<input type="email" autoFocus required value={email} onChange={event=>setEmail(event.target.value)} placeholder="traveler@example.com"/></label><label>Name (optional)<input value={name} onChange={event=>setName(event.target.value)}/></label><label>Role<select value={role} onChange={event=>setRole(event.target.value as MemberRole)}><option value="editor">Editor — can help plan</option><option value="viewer">Viewer — read only</option></select></label><button className="wl-form-submit">Add invitation</button></form>;
+}
+
+function TripForm({trip,workspace,newTrip,setModal,setToast,setWorkspace,record}:{trip:Trip;workspace:Workspace;newTrip?:boolean;setModal:(value:ModalState)=>void;setToast:(text:string)=>void;setWorkspace:(value:Workspace|((current:Workspace)=>Workspace))=>void;record:(next:Trip,text:string,memberId?:string)=>Trip}){
+  const currentUser=trip.members.find(member=>member.id===workspace.currentUserId);const [name,setName]=useState(newTrip?'':trip.name);const [destination,setDestination]=useState(newTrip?'':trip.destination);const [start,setStart]=useState(newTrip?new Date(Date.now()+30*86_400_000).toISOString().slice(0,10):trip.startDate);const [end,setEnd]=useState(newTrip?new Date(Date.now()+33*86_400_000).toISOString().slice(0,10):trip.endDate);const [description,setDescription]=useState(newTrip?'':trip.description);const [budget,setBudget]=useState(String(newTrip?1500:trip.budget));
+  const submit=(event:FormEvent)=>{event.preventDefault();if(!name.trim()||!destination.trim()||end<start)return;if(newTrip){const id=crypto.randomUUID();const owner:TripMember={id:workspace.currentUserId,name:currentUser?.name??'Traveler',email:currentUser?.email??'',initials:currentUser?.initials??'TR',role:'owner',status:'active'};const next:Trip={id,name:name.trim(),destination:destination.trim(),startDate:start,endDate:end,description:description.trim(),budget:Math.max(0,Number(budget)||0),archived:false,members:[owner],activities:[],places:[],expenses:[],packing:[],notes:[],reservations:[],history:[]};const withHistory=record(next,'created this trip');setWorkspace(current=>({...current,activeTripId:id,trips:[...current.trips,withHistory]}));setToast('New trip created')}else setWorkspace(current=>({...current,trips:current.trips.map(item=>item.id===trip.id?record({...item,name:name.trim(),destination:destination.trim(),startDate:start,endDate:end,description:description.trim(),budget:Math.max(0,Number(budget)||0)},'updated the trip details'):item)}));setModal(null)};
+  const archive=()=>{if(newTrip)return;if(!window.confirm('Archive this trip? It will disappear from the active trip switcher.'))return;setWorkspace(current=>({...current,trips:current.trips.map(item=>item.id===trip.id?{...item,archived:true}:item)}));setModal(null);setToast('Trip archived')};
+  return <form onSubmit={submit}><FormTitle icon={<Map/>} title={newTrip?'Create a trip':'Trip settings'} text={newTrip?'Start solo. Invite collaborators whenever you want.':'Update the shared details everyone sees.'}/><label>Trip name<input autoFocus required value={name} onChange={event=>setName(event.target.value)}/></label><label>Destination<input required value={destination} onChange={event=>setDestination(event.target.value)} placeholder="City, Country"/></label><div className="wl-form-grid"><label>Start date<input type="date" value={start} onChange={event=>{setStart(event.target.value);if(end<event.target.value)setEnd(event.target.value)}}/></label><label>End date<input type="date" min={start} value={end} onChange={event=>setEnd(event.target.value)}/></label></div><label>Trip budget (USD)<input type="number" min="0" step="1" value={budget} onChange={event=>setBudget(event.target.value)}/></label><label>Description<textarea value={description} onChange={event=>setDescription(event.target.value)} placeholder="What kind of trip are you planning?"/></label><div className="wl-form-actions">{!newTrip&&workspace.trips.filter(item=>!item.archived).length>1&&<button type="button" className="danger" onClick={archive}><Archive size={15}/> Archive trip</button>}<button className="wl-form-submit">{newTrip?'Create trip':'Save trip'}</button></div></form>;
+}
+
+function FormTitle({icon,title,text}:{icon:ReactNode;title:string;text:string}){return <div className="wl-form-title"><span>{icon}</span><div><h2>{title}</h2><p>{text}</p></div></div>}
