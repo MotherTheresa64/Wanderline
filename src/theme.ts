@@ -1,0 +1,27 @@
+type ThemeId='sunset'|'coast'|'terracotta'|'night';
+type ThemeOption={id:ThemeId;label:string;description:string;colors:[string,string];browserColor:string};
+const STORAGE_KEY='wanderline-theme-v1';
+const DEFAULT_THEME:ThemeId='sunset';
+const themes:ThemeOption[]=[
+  {id:'sunset',label:'Sunset',description:'Warm Mediterranean cream and green',colors:['#f6f1e6','#d86b4d'],browserColor:'#f3f0e7'},
+  {id:'coast',label:'Coast',description:'Sea glass, sand and ocean blue',colors:['#eef6f4','#3d7f88'],browserColor:'#eef6f4'},
+  {id:'terracotta',label:'Terracotta',description:'Clay, linen and deep olive',colors:['#f8eee6','#b85f43'],browserColor:'#f8eee6'},
+  {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#121b20','#e5a76f'],browserColor:'#11191e'}
+];
+function isTheme(value:string|null):value is ThemeId{return themes.some(theme=>theme.id===value)}
+function readTheme():ThemeId{try{const saved=localStorage.getItem(STORAGE_KEY);return isTheme(saved)?saved:DEFAULT_THEME}catch{return DEFAULT_THEME}}
+function persistTheme(theme:ThemeId){try{localStorage.setItem(STORAGE_KEY,theme)}catch{/* Keep appearance controls working without storage. */}}
+function setBrowserColor(color:string){let meta=document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.append(meta)}meta.content=color}
+function applyTheme(theme:ThemeId){
+  const option=themes.find(item=>item.id===theme)??themes[0];document.documentElement.dataset.theme=option.id;document.documentElement.style.colorScheme=option.id==='night'?'dark':'light';setBrowserColor(option.browserColor);persistTheme(option.id);
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]').forEach(button=>{const active=button.dataset.themeChoice===option.id;button.setAttribute('aria-pressed',String(active));button.classList.toggle('active',active)});const label=document.querySelector<HTMLElement>('[data-current-theme]');if(label)label.textContent=option.label;
+}
+function createThemeControl(){
+  if(document.querySelector('.theme-control'))return;
+  const host=document.createElement('div');host.className='theme-control';host.innerHTML=`<button class="theme-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Choose appearance"><span class="theme-toggle-icon" aria-hidden="true">☼</span><span class="theme-toggle-copy"><b>Trip style</b><small data-current-theme></small></span><span aria-hidden="true">⌃</span></button><div class="theme-panel" role="dialog" aria-label="Choose Wanderline theme" hidden><div class="theme-panel-head"><div><b>Set the mood</b><small>Your trip style is saved on this device.</small></div><button class="theme-close" type="button" aria-label="Close theme picker">×</button></div><div class="theme-options"></div></div>`;
+  const options=host.querySelector<HTMLElement>('.theme-options')!;const toggle=host.querySelector<HTMLButtonElement>('.theme-toggle')!;const panel=host.querySelector<HTMLElement>('.theme-panel')!;const closeButton=host.querySelector<HTMLButtonElement>('.theme-close')!;
+  const open=()=>{panel.hidden=false;toggle.setAttribute('aria-expanded','true');requestAnimationFrame(()=>panel.classList.add('open'))};const close=()=>{panel.classList.remove('open');toggle.setAttribute('aria-expanded','false');window.setTimeout(()=>{panel.hidden=true},150)};
+  themes.forEach(theme=>{const button=document.createElement('button');button.type='button';button.className='theme-option';button.dataset.themeChoice=theme.id;button.innerHTML=`<span class="theme-swatch" style="--swatch-a:${theme.colors[0]};--swatch-b:${theme.colors[1]}"></span><span><b>${theme.label}</b><small>${theme.description}</small></span><span class="theme-check" aria-hidden="true">✓</span>`;button.addEventListener('click',()=>{applyTheme(theme.id);close()});options.append(button)});
+  toggle.addEventListener('click',()=>panel.hidden?open():close());closeButton.addEventListener('click',close);document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)close()});document.addEventListener('pointerdown',event=>{if(!panel.hidden&&!host.contains(event.target as Node))close()});document.body.append(host);applyTheme(readTheme());
+}
+export function initializeThemes(){applyTheme(readTheme());if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',createThemeControl,{once:true});else queueMicrotask(createThemeControl)}
