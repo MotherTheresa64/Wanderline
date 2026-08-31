@@ -10,25 +10,20 @@ npm run check
 npm run smoke:server
 ```
 
-`npm run check` typechecks both TypeScript targets, builds the Vite client and Express server, and verifies the required production artifacts. `npm run smoke:server` boots the compiled host on a temporary port, validates `/api/health` and `/api/config`, confirms unknown API paths return JSON `404`, and shuts the process down.
+`npm run check` typechecks the React and Node targets, builds both production artifacts, and verifies the generated client/server output. `npm run smoke:server` starts the compiled Express host on a temporary port, validates `/api/health` and `/api/config`, confirms unknown API routes return JSON `404`, and shuts down cleanly.
 
-For manual production-host inspection:
+## 2. Current external services
 
-```bash
-npm start
-```
+The public app requires no Maps or Weather secret:
 
-## 2. External services
+- destination weather uses Open-Meteo's public geocoding + forecast APIs;
+- map/search/directions actions use Google Maps universal URLs;
+- USD formatting uses the browser `Intl` APIs;
+- collaborative state currently uses validated local browser persistence.
 
-The finalized application does **not** require Maps or Weather API keys:
+The only remaining external product phase is Firebase Authentication + hosted collaborative storage.
 
-- current Barcelona weather is read from the public Open-Meteo API with a graceful local fallback;
-- map actions open OpenStreetMap in a new tab;
-- the rest of the trip experience is local-first and works without credentials.
-
-The only optional external setup left is Firebase Authentication.
-
-## 3. Firebase Auth
+## 3. Firebase Authentication
 
 Create a Firebase project and web application, enable Google sign-in, and set:
 
@@ -39,65 +34,101 @@ VITE_FIREBASE_PROJECT_ID
 VITE_FIREBASE_APP_ID
 ```
 
-After the public Render URL exists, add its hostname to Firebase Authentication authorized domains.
+Add the Render hostname to Firebase Authentication authorized domains.
 
-If Firebase is not configured, the app stays fully usable with the built-in local demo identity.
+Without these values, Wanderline deliberately stays in local demo mode instead of blocking the public portfolio experience.
 
-## 4. Render
+## 4. Firestore collaboration phase
 
-The production service is already deployed at:
+Authentication alone does not make trips shared. Add Firestore (or an equivalent hosted datastore) for:
+
+- user profiles;
+- trips;
+- trip membership, roles, and invitations;
+- activities, statuses, attendees, and votes;
+- saved places;
+- expenses, payers, participants, and custom shares;
+- packing items and ownership;
+- notes;
+- reservations;
+- activity history.
+
+Use real-time listeners for shared trip resources so changes appear across collaborators/devices without manual refresh.
+
+Firestore rules must enforce:
+
+- authenticated membership for private trip reads;
+- Owner-only membership/permission/destructive trip operations;
+- Editor writes to allowed shared planning resources;
+- Viewer read-only access;
+- user-owned profile preference writes.
+
+## 5. Render
+
+Production URL:
 
 ```text
 https://wanderline-s1yv.onrender.com
 ```
 
-The included `render.yaml` defines one Node web service with Auto-Deploy-compatible configuration.
-
-Expected commands:
+Expected service configuration:
 
 ```text
+Branch: main
 Build: npm install --include=dev --no-audit --no-fund && npm run check
 Start: npm start
 Health: /api/health
+Auto-Deploy: On Commit
 ```
 
-Only the optional `VITE_FIREBASE_*` values need to be supplied when Firebase is enabled.
+`render.yaml` contains the Firebase environment placeholders. No Google Maps or Open-Meteo key is required for the current integration strategy.
 
-## 5. Release checks
+## 6. Release checks
 
-Verify:
+Before considering a commit production-ready, verify:
 
-1. itinerary renders correctly on desktop, tablet, and mobile;
-2. trip countdown is based on the current date;
-3. itinerary search filters activities correctly;
-4. activities can be created, edited, deleted, completed, and reopened;
-5. activity time/type/place/cost/duration/note persist after refresh;
-6. budget totals/category percentages stay correct after adding and deleting expenses;
-7. expense search filters the ledger without changing aggregate totals;
-8. packing state persists after refresh;
-9. saved places can be created, searched, opened, mapped, and removed;
-10. OpenStreetMap opens from both trip-map and saved-place actions;
-11. live Open-Meteo weather loads when reachable and fallback weather keeps the UI usable when not;
-12. Web Share works where supported and clipboard fallback works elsewhere;
-13. Google sign-in works after Firebase configuration;
-14. `/api/health` and `/api/config` return expected JSON;
-15. unknown `/api/*` routes return JSON `404` responses;
-16. browser console has no uncaught errors.
+1. CI `npm run check` succeeds;
+2. compiled server smoke test succeeds;
+3. Overview displays active trip, party, budget, bookings, and group decisions;
+4. multiple trips can be created and switched;
+5. trip details can be edited;
+6. archiving/deleting a trip switches to a valid fallback trip;
+7. itinerary contains one non-overlapping chronological card per activity;
+8. activity CRUD/status/attendee changes persist;
+9. Ideas can be voted on and promoted to Planned/Confirmed;
+10. saved places can be searched, edited, removed, mapped, and converted into itinerary items;
+11. Google Maps search/directions open correctly on desktop and mobile;
+12. budget totals remain USD and agree with the full expense ledger;
+13. personal/equal/custom expense splits calculate correctly;
+14. settlement suggestions match member balances;
+15. shared/personal packing ownership behaves correctly;
+16. notes/bookings CRUD works and booking locations open Google Maps;
+17. traveler roles and pending invitations behave correctly in local mode;
+18. global search routes results into the correct product view;
+19. destination weather loads when Open-Meteo is reachable and fails gracefully otherwise;
+20. theme selection persists;
+21. native Web Share / clipboard fallback behave correctly;
+22. error recovery clears only Wanderline v2 workspace data;
+23. `/api/health` and `/api/config` return expected JSON;
+24. unknown `/api/*` returns JSON `404`;
+25. no uncaught browser errors appear during the primary workflows.
 
-## 6. Hosted per-user persistence phase
+## 7. Mobile/device checks
 
-Firebase Authentication by itself provides identity, but it does not move browser-local trip data between devices. For real private user accounts, add Firestore or another hosted datastore keyed to the authenticated user.
+Test at minimum:
 
-A hosted model should cover trips, members, activities, expenses, saved places, and packing items. Keep the UI-facing data shape independent from the persistence provider so the local-first demo can remain a useful fallback.
+- 360x800
+- 390x844
+- 844x390 landscape
+- 768x1024 tablet
+- 1366x768 laptop
+- 1920x1080 desktop
+- one physical Android or iOS device
 
-## 7. After deployment
+The itinerary must reflow without duplicate cards, overlap, or page-level horizontal scrolling. Modals must remain scrollable and controls must remain large enough to operate by touch.
 
-- keep the live URL in the GitHub README and repository homepage;
-- capture desktop and physical-phone screenshots;
-- test Web Share on a physical phone and clipboard fallback on desktop;
-- test from a clean/incognito browser with no existing local storage;
-- add the live project to the portfolio and LinkedIn.
+## 8. Rollback
 
-## Rollback
+Render Auto-Deploy tracks `main`. If a production regression escapes CI, restore the previous successful deploy through Render or revert the responsible commit on `main`.
 
-If a release regresses, use Render's previous successful deploy. Auto-Deploy tracks `main`, and the build gate prevents a failing TypeScript/build check from replacing the current live release.
+The GitHub Actions build/smoke gates are intended to catch TypeScript, production build, and server-contract failures before release.
