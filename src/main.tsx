@@ -10,6 +10,7 @@ import './final-polish.css';
 import './themes.css';
 import './release-polish.css';
 import './usd.css';
+import './theme-layout.css';
 
 initializeThemes();
 initializeUsdDisplay();
