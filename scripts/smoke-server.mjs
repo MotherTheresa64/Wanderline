@@ -25,11 +25,18 @@ async function waitForHealth(){
 
 try{
   const health=await waitForHealth();
-  const payload=await health.json();
-  if(payload.status!=='ok'||payload.service!=='wanderline')throw new Error(`unexpected health payload: ${JSON.stringify(payload)}`);
+  const healthPayload=await health.json();
+  if(healthPayload.status!=='ok'||healthPayload.service!=='wanderline')throw new Error(`unexpected health payload: ${JSON.stringify(healthPayload)}`);
+  if(!['local-first','auth-ready'].includes(healthPayload.mode))throw new Error(`unexpected runtime mode: ${JSON.stringify(healthPayload)}`);
 
   const config=await fetch(`${origin}/api/config`);
   if(!config.ok)throw new Error(`expected config endpoint 200, received ${config.status}`);
+  const configPayload=await config.json();
+  if(configPayload.weather!=='open-meteo')throw new Error(`unexpected weather config: ${JSON.stringify(configPayload)}`);
+  if(configPayload.maps!=='google-maps-universal-links')throw new Error(`unexpected maps config: ${JSON.stringify(configPayload)}`);
+  if(configPayload.currency!=='USD')throw new Error(`unexpected currency config: ${JSON.stringify(configPayload)}`);
+  if(!['local-demo','auth-ready'].includes(configPayload.collaboration))throw new Error(`unexpected collaboration config: ${JSON.stringify(configPayload)}`);
+  if(typeof configPayload.firebase!=='boolean')throw new Error(`unexpected Firebase config: ${JSON.stringify(configPayload)}`);
 
   const missing=await fetch(`${origin}/api/__smoke_missing__`);
   if(missing.status!==404)throw new Error(`expected API 404, received ${missing.status}`);
