@@ -1,8 +1,10 @@
 # Wanderline Architecture
 
-## Goals
+## Product goal
 
-Wanderline is a consumer travel-planning product designed around a calm, visual itinerary rather than an admin-style dashboard. The current build is fully demonstrable without private third-party credentials while keeping authentication and hosted persistence behind explicit integration seams.
+Wanderline is a collaborative travel workspace that works cleanly for one traveler and scales naturally to a group. Its core job is to keep planning, decisions, itinerary, travelers, money, saved places, packing, bookings, notes, weather, and trip history in one mobile-friendly source of truth.
+
+The public portfolio release is deliberately usable without credentials. Its browser-local domain model is already shaped for the final Firebase Authentication + Firestore implementation so cloud wiring does not require another UI redesign.
 
 ## Runtime shape
 
@@ -10,11 +12,21 @@ Wanderline is a consumer travel-planning product designed around a calm, visual 
 Browser
   React 19 + TypeScript
       |
-      +-- itinerary / budget / packing / saved-place state
-      +-- localStorage persistence
+      +-- Workspace v2
+      |    +-- multiple trips
+      |    +-- members + roles + pending invitations
+      |    +-- activities + suggestions + votes
+      |    +-- saved places
+      |    +-- expenses + participants + split rules
+      |    +-- packing ownership
+      |    +-- notes + reservations
+      |    +-- activity history
+      |
+      +-- storage.ts -> validated local persistence
       +-- firebase.ts -> optional Google authentication
-      +-- Open-Meteo -> current Barcelona weather (keyless)
-      +-- OpenStreetMap -> external map/search actions
+      +-- theme.ts -> persisted appearance preference
+      +-- weather.ts -> Open-Meteo destination weather
+      +-- maps.ts -> Google Maps universal links
       +-- Web Share / clipboard fallback
       |
 Express production host
@@ -23,65 +35,180 @@ Express production host
       +-- static Vite build / SPA fallback
 ```
 
-## Client domain
+## Domain model
 
-The main client state covers four practical travel concerns:
+`src/model.ts` owns the canonical client domain.
 
-- activities: ordered day/time plans with place, type, cost, duration, completion, and notes;
-- expenses: categorized trip spending used to derive budget metrics;
-- packing: lightweight completion state for trip preparation;
-- saved places: user-created points of interest with category, neighborhood, notes, and map actions.
+### Workspace
 
-Derived values such as budget remaining, completion percentage, category totals, packing progress, saved-place counts, and search results are calculated from canonical state instead of independently stored display values.
+A workspace contains:
 
-## Itinerary workflow
+- current local user id;
+- active trip id;
+- multiple trips;
+- schema version (`2`) for safe browser persistence/migration.
 
-Activities can be created, edited, deleted, completed, reopened, searched, and sorted chronologically. Editing preserves completion state. The mobile layout reformats the timeline and controls rather than forcing desktop-width content into a narrow viewport.
+### Trip
 
-## Budget workflow
+Each trip contains:
 
-Expenses can be created, searched, and removed. Aggregate budget and category figures always derive from the complete ledger, while search only changes which ledger rows are visible.
+- shared trip details and USD budget;
+- members;
+- activities;
+- saved places;
+- expenses;
+- packing items;
+- notes;
+- reservations;
+- activity/history entries.
 
-## Saved places
+The interface derives totals, progress, balances, and counts from canonical state instead of storing duplicate display values.
 
-Saved places are first-class persisted data rather than static cards. Users can create, search, inspect, map, and remove them. OpenStreetMap is opened externally with URL-encoded place queries, which avoids exposing or managing a private maps credential.
+## Collaboration model
+
+Trip members use three roles:
+
+- **Owner** — full trip/member management and destructive trip actions;
+- **Editor** — can modify shared trip planning resources;
+- **Viewer** — read-only shared trip experience.
+
+The credential-free release can create pending invitations locally so the full membership UX is testable. Real invitation delivery, acceptance, authenticated membership, and real-time synchronization are intentionally the Firebase/Firestore boundary.
+
+## Itinerary and ideas
+
+Wanderline separates **suggestions** from the actual itinerary.
+
+Activities support:
+
+- `suggested`
+- `planned`
+- `confirmed`
+- `completed`
+
+Suggested activities live in the Ideas workspace and can receive member votes. Editors promote accepted ideas into the real itinerary.
+
+The itinerary itself is a single chronological timeline with one card per activity. Saved places and ideas do not render as duplicate floating cards on top of that timeline. Each activity stores date, time, location, category, duration, USD cost, notes, creator, attendees, and votes.
+
+## Saved-place workflow
+
+Saved places are a collaborative wishlist. A place can be:
+
+- created and edited;
+- searched;
+- removed;
+- opened in Google Maps;
+- converted directly into a prefilled itinerary activity.
+
+This keeps discovery separate from committed plans while making promotion into the itinerary inexpensive.
+
+## Google Maps integration
+
+`src/maps.ts` builds standard Google Maps universal URLs for search and walking directions. These actions do not require a Maps JavaScript API key, billing account, or embedded map SDK.
+
+This is intentional for the public portfolio release: users get familiar Google Maps handoff while the app remains credential-free. An embedded Google Maps SDK can be added later if in-app map interaction becomes valuable enough to justify provider billing/configuration.
 
 ## Weather
 
-The client reads current Barcelona conditions from Open-Meteo's public forecast API. Weather is intentionally non-critical: if the request fails, Wanderline retains a polished fallback condition so the trip-planning workflow stays usable offline or during provider disruption.
+`src/weather.ts` first geocodes the active trip destination through Open-Meteo, then retrieves current conditions in Fahrenheit. Weather is non-critical; failures produce a useful fallback instead of blocking trip planning.
+
+## Budget and settlement model
+
+Expenses track:
+
+- description and category;
+- USD amount;
+- paying member;
+- participating members;
+- split mode (`personal`, `equal`, or `custom`);
+- optional custom shares.
+
+Derived balance logic calculates what each traveler paid versus their assigned share. A settlement pass matches debtors and creditors to provide a concise “who owes whom” result.
+
+Search filters only visible ledger rows; aggregate budget values always derive from the complete expense ledger.
+
+## Packing model
+
+Packing items are either:
+
+- **personal** — assigned to one traveler;
+- **shared** — group item with one explicit responsible traveler.
+
+This prevents the common group-trip problem where everyone assumes somebody else packed a shared item.
+
+## Notes and reservations
+
+Shared notes hold practical context that does not belong to a specific activity. Reservations support flights, hotels, rental cars, restaurants, events, and other bookings with date/time/location, confirmation/reference values, and notes.
+
+Locations open directly in Google Maps.
+
+## Activity history
+
+Important local mutations append lightweight history events containing member, text, and timestamp. In Firestore this becomes a natural append-only activity collection or subcollection and can later power notifications.
 
 ## Search and sharing
 
-The global search field is contextual to the selected tab:
+Global search spans:
 
-- itinerary -> activity title/place/note/type;
-- budget -> expense label/category;
-- saved -> place name/category/neighborhood/note.
+- activities;
+- saved places;
+- expenses;
+- notes;
+- reservations;
+- travelers.
 
-Sharing uses the platform Web Share API when available and falls back to the clipboard, providing useful behavior on both mobile and desktop without another service.
+`Ctrl/Cmd + K` focuses search. Native Web Share is used where available with clipboard fallback elsewhere.
 
-## Authentication
+## Appearance
 
-`src/firebase.ts` activates only when the required `VITE_FIREBASE_*` variables exist. The portfolio release therefore has no credential requirement while a real Google sign-in flow can be enabled without replacing the application shell.
+`src/theme.ts` persists one of four user-selectable travel themes. `src/themes.css` provides the palette and picker presentation, while `src/app-v2.css` consumes semantic theme variables across the full application.
 
-Firebase Authentication provides identity only. Cross-device private trip data requires a hosted datastore such as Firestore keyed to the authenticated user.
+Theme preference is device-local today and can move into the authenticated user profile later.
 
-## Persistence
+## Persistence boundary
 
-The current experience persists trip state locally so reviewers can fully modify the itinerary, expenses, packing list, and saved places without creating an account. Storage failures are caught so the in-memory application remains usable even if persistence is unavailable.
+`src/storage.ts` validates and persists the versioned local workspace under `wanderline-workspace-v2`. Invalid or blocked storage falls back to the built-in sample workspace rather than crashing the app.
 
-Hosted storage can later replace the local adapter with user-owned trips, collaborators, activities, expenses, saved places, and packing items.
+The local adapter is intentionally isolated. The final hosted implementation should replace it with an authenticated repository/data layer without changing the presentation/domain model.
 
-## Deployment
+## Firebase / Firestore target architecture
 
-Vite builds the browser client and TypeScript builds the Node host. The Express layer provides health/config endpoints, secure default headers, correct JSON API 404s, immutable caching for hashed assets, fresh HTML responses, and graceful process shutdown on Render deploys.
+```text
+Firebase Authentication
+      |
+      v
+Authenticated user
+      |
+      +--> Firestore users/{uid}
+      +--> trips/{tripId}
+              |
+              +--> members
+              +--> activities / votes
+              +--> places
+              +--> expenses / split participants
+              +--> packing
+              +--> notes
+              +--> reservations
+              +--> history
+```
 
-Render tracks `main` with Auto-Deploy. `npm run check` must pass before a new release can become live.
+Security rules must verify trip membership for every shared document and enforce Owner-only operations where appropriate. Viewer writes must be rejected server-side/database-side, not merely hidden in React.
 
-## Production data model
+Real-time Firestore listeners can then replace local-only updates so one traveler's edits appear for the rest of the group immediately.
 
-A practical hosted schema would include users, trips, trip_members, activities, expenses, saved_places, packing_items, and optional reservations/attachments. Activity ordering should use explicit sortable positions or timestamps rather than relying on insertion order.
+## Production host
+
+Vite builds the browser client and TypeScript builds the Express host. The server provides:
+
+- secure default headers;
+- no-store API responses;
+- health/config endpoints;
+- JSON API `404`s;
+- immutable caching for hashed client assets;
+- fresh SPA HTML;
+- graceful process shutdown.
 
 ## Tradeoffs
 
-Open-Meteo and OpenStreetMap were chosen for the current portfolio release because they provide useful real-world data/navigation without requiring secret management or quota setup. Authentication and cross-device persistence remain intentionally isolated so Firebase can be added as the final external integration without rewriting the consumer-facing product.
+The current build intentionally does not fake real cross-account collaboration. It fully models and demonstrates the collaboration UX locally, but actual invitation delivery, membership acceptance, private shared links, and multi-device live updates wait for Firebase/Firestore.
+
+Google Maps universal links and Open-Meteo provide useful real-world integrations without putting provider credentials between a recruiter and the demo.
