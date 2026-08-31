@@ -11,10 +11,6 @@ services:
         value: 22.16.0
       - key: NODE_ENV
         value: production
-      - key: MAPS_API_KEY
-        sync: false
-      - key: WEATHER_API_KEY
-        sync: false
       - key: VITE_FIREBASE_API_KEY
         sync: false
       - key: VITE_FIREBASE_AUTH_DOMAIN
