@@ -3,10 +3,10 @@ type ThemeOption={id:ThemeId;label:string;description:string;colors:[string,stri
 const STORAGE_KEY='wanderline-theme-v1';
 const DEFAULT_THEME:ThemeId='sunset';
 const themes:ThemeOption[]=[
-  {id:'sunset',label:'Sunset',description:'Warm Mediterranean cream and green',colors:['#f6f1e6','#d86b4d'],browserColor:'#f3f0e7'},
-  {id:'coast',label:'Coast',description:'Sea glass, sand and ocean blue',colors:['#eef6f4','#3d7f88'],browserColor:'#eef6f4'},
-  {id:'terracotta',label:'Terracotta',description:'Clay, linen and deep olive',colors:['#f8eee6','#b85f43'],browserColor:'#f8eee6'},
-  {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#121b20','#e5a76f'],browserColor:'#11191e'}
+  {id:'sunset',label:'Sunset',description:'Dark Mediterranean green with coral warmth',colors:['#101817','#e17a59'],browserColor:'#101817'},
+  {id:'coast',label:'Coast',description:'Deep ocean blue with sea-glass accents',colors:['#0f181c','#62aeb8'],browserColor:'#0f181c'},
+  {id:'terracotta',label:'Terracotta',description:'Dark clay and olive with warm copper accents',colors:['#171411','#d9795d'],browserColor:'#171411'},
+  {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#11191e','#e5a76f'],browserColor:'#11191e'}
 ];
 function isTheme(value:string|null):value is ThemeId{return themes.some(theme=>theme.id===value)}
 function readTheme():ThemeId{try{const saved=localStorage.getItem(STORAGE_KEY);return isTheme(saved)?saved:DEFAULT_THEME}catch{return DEFAULT_THEME}}
@@ -19,7 +19,7 @@ function updateDynamicThemeSurfaces(){
   });
 }
 function applyTheme(theme:ThemeId){
-  const option=themes.find(item=>item.id===theme)??themes[0];document.documentElement.dataset.theme=option.id;document.documentElement.style.colorScheme=option.id==='night'?'dark':'light';setBrowserColor(option.browserColor);persistTheme(option.id);
+  const option=themes.find(item=>item.id===theme)??themes[0];document.documentElement.dataset.theme=option.id;document.documentElement.style.colorScheme='dark';setBrowserColor(option.browserColor);persistTheme(option.id);
   document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]').forEach(button=>{const active=button.dataset.themeChoice===option.id;button.setAttribute('aria-pressed',String(active));button.classList.toggle('active',active)});const label=document.querySelector<HTMLElement>('[data-current-theme]');if(label)label.textContent=option.label;requestAnimationFrame(updateDynamicThemeSurfaces);
 }
 function createThemeControl(){
