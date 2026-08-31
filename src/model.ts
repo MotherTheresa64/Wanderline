@@ -108,7 +108,7 @@ export type Trip={
 };
 
 export type Workspace={
-  version:2;
+  version:3;
   currentUserId:string;
   activeTripId:string;
   trips:Trip[];
