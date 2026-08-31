@@ -26,7 +26,9 @@ app.get('/api/health',(_req,res)=>res.json({
 app.get('/api/config',(_req,res)=>res.json({
   firebase:Boolean(process.env.VITE_FIREBASE_PROJECT_ID),
   weather:'open-meteo',
-  maps:'openstreetmap'
+  maps:'google-maps-universal-links',
+  currency:'USD',
+  collaboration:process.env.VITE_FIREBASE_PROJECT_ID?'auth-ready':'local-demo'
 }));
 
 app.use('/api',(_req,res)=>res.status(404).json({error:'API route not found'}));
