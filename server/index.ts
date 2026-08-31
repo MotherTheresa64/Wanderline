@@ -19,15 +19,14 @@ app.use('/api',(_req,res,next)=>{res.setHeader('Cache-Control','no-store');next(
 app.get('/api/health',(_req,res)=>res.json({
   status:'ok',
   service:'wanderline',
-  maps:Boolean(process.env.MAPS_API_KEY),
-  weather:Boolean(process.env.WEATHER_API_KEY),
+  mode:process.env.VITE_FIREBASE_PROJECT_ID?'auth-ready':'local-first',
   timestamp:new Date().toISOString()
 }));
 
 app.get('/api/config',(_req,res)=>res.json({
-  maps:Boolean(process.env.MAPS_API_KEY),
-  weather:Boolean(process.env.WEATHER_API_KEY),
-  firebase:Boolean(process.env.VITE_FIREBASE_PROJECT_ID)
+  firebase:Boolean(process.env.VITE_FIREBASE_PROJECT_ID),
+  weather:'open-meteo',
+  maps:'openstreetmap'
 }));
 
 app.use('/api',(_req,res)=>res.status(404).json({error:'API route not found'}));
