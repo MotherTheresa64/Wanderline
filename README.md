@@ -2,6 +2,8 @@
 
 **Make the trip feel real before you leave.** Wanderline is a consumer-focused travel planning application for building day-by-day itineraries, tracking budgets, keeping practical trip details together, and presenting the experience with a calmer visual language than a typical admin dashboard.
 
+**Live demo:** https://wanderline-s1yv.onrender.com
+
 ## What works today
 
 - Immersive Barcelona trip dashboard with live trip countdown and progress
