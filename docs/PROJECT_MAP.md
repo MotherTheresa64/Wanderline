@@ -3,30 +3,40 @@
 ```text
 .
 ├── src/
-│   ├── App.tsx             Collaborative product UI and all local CRUD/workflows
-│   ├── model.ts           Workspace/trip/member/activity/expense domain model + derived calculations
-│   ├── demo.ts            Rich Barcelona collaborative sample workspace
-│   ├── storage.ts         Validated/versioned v2 local persistence adapter
-│   ├── maps.ts            Google Maps universal search/directions links
-│   ├── weather.ts         Destination geocoding + current weather via Open-Meteo
-│   ├── firebase.ts        Optional Firebase Google-auth adapter
-│   ├── theme.ts           Persistent four-theme appearance controller
-│   ├── themes.css         Theme palettes + appearance picker
-│   ├── app-v2.css        Rebuilt responsive collaborative Wanderline UI
-│   ├── accessibility.css Focus visibility and reduced-motion rules
-│   └── ErrorBoundary.tsx Runtime recovery + v2 local-workspace reset
+│   ├── App.tsx                 Tiny compatibility entry that re-exports app/App
+│   ├── app/
+│   │   ├── App.tsx             Workspace orchestration, navigation, search, permission gates, sharing
+│   │   ├── views.tsx           Overview, itinerary, ideas, places, budget, packing, notes, travelers, activity
+│   │   ├── forms.tsx           Validated domain mutation forms and trip/member workflows
+│   │   └── shared.tsx          Accessible modal and reusable UI primitives
+│   ├── model.ts                Canonical domain types, dates, cents math, permissions, invariants
+│   ├── demo.ts                 Barcelona sample workspace (schema v4)
+│   ├── storage.ts              Deep validation, v4 persistence, v3 migration/normalization
+│   ├── maps.ts                 Blank-safe Google Maps universal URLs
+│   ├── weather.ts              Open-Meteo geocoding, disambiguation, aborts, cache
+│   ├── firebase.ts             Optional Firebase Google Authentication adapter only
+│   ├── theme.ts                Persisted four-theme picker with focus management
+│   ├── themes.css              Theme palettes + picker presentation
+│   ├── app-v2.css              Core responsive/themed product visuals
+│   ├── accessibility.css       Global focus/reduced-motion baseline
+│   ├── polish.css              Final readability, touch, safe-area, narrow-screen layer
+│   ├── ErrorBoundary.tsx       Runtime recovery + v4/v3 local-workspace reset
+│   └── main.tsx                React entry and stylesheet ordering
+├── tests/
+│   └── domain.test.ts          Date/money/member/persistence/Maps domain tests
 ├── server/
-│   └── index.ts           Express production host and non-secret config/health endpoints
+│   └── index.ts                Express host + truthful local/auth/persistence metadata
 ├── scripts/
-│   ├── verify-build.mjs   Required production-artifact verifier
-│   └── smoke-server.mjs   Compiled-server integration smoke test
+│   ├── verify-build.mjs        Required production-artifact verifier
+│   └── smoke-server.mjs        Compiled-server contract smoke test
 ├── docs/
-│   ├── ARCHITECTURE.md    Collaborative domain / Firebase boundary
-│   ├── DEPLOYMENT.md      Render/Firebase/Firestore deployment runbook
-│   ├── QA.md              Functional/collaboration/mobile acceptance checklist
-│   └── PROJECT_MAP.md     This file
+│   ├── ARCHITECTURE.md         Domain/invariant/cloud-boundary design
+│   ├── DEPLOYMENT.md           Render + Firebase/Firestore rollout runbook
+│   ├── QA.md                   Automated/manual acceptance checklist
+│   └── PROJECT_MAP.md          This file
 ├── .github/workflows/ci.yml
 ├── render.yaml
+├── tsconfig.test.json
 └── package.json
 ```
 
@@ -34,35 +44,58 @@
 
 | Goal | Primary files |
 | --- | --- |
-| Change trip/member/activity/expense types or calculations | `src/model.ts` |
-| Change sample/recruiter demo content | `src/demo.ts` |
-| Change local persistence / migration | `src/storage.ts` |
-| Change Overview/Itinerary/Ideas/Places/Budget/Packing/Notes/Travelers UI | `src/App.tsx` |
+| Change trip/member/activity/expense types or pure domain calculations | `src/model.ts` |
+| Change schema validation/migration/local persistence | `src/storage.ts`, `src/demo.ts` |
+| Change global app state/navigation/search/sharing/permission orchestration | `src/app/App.tsx` |
+| Change a product view | `src/app/views.tsx` |
+| Change add/edit forms or mutation validation | `src/app/forms.tsx` |
+| Change modal/focus/shared UI primitives | `src/app/shared.tsx` |
 | Change Google Maps behavior | `src/maps.ts` |
-| Change destination weather behavior | `src/weather.ts` |
-| Change theme choices/persistence | `src/theme.ts` |
-| Change theme palettes/picker | `src/themes.css` |
-| Change layout/responsive visual design | `src/app-v2.css` |
-| Change accessibility defaults | `src/accessibility.css` |
-| Connect/replace authentication | `src/firebase.ts` |
-| Add Firestore real-time collaboration | new hosted repository/data adapter using `src/model.ts` shapes + Firebase identity |
+| Change weather behavior | `src/weather.ts` |
+| Change Firebase Authentication | `src/firebase.ts` |
+| Add real Firestore collaboration | new repository/data adapter + Firebase setup/rules; then update `storage.ts` boundary/API metadata |
+| Change appearance themes | `src/theme.ts`, `src/themes.css` |
+| Change primary layout visuals | `src/app-v2.css` |
+| Change final mobile/readability/accessibility overrides | `src/polish.css`, `src/accessibility.css` |
 | Change runtime recovery | `src/ErrorBoundary.tsx` |
-| Change production API/config metadata | `server/index.ts` |
-| Change Render/Firebase environment wiring | `render.yaml`, `.env.example` |
-| Change CI/build/smoke behavior | `package.json`, `scripts/*`, `.github/workflows/ci.yml` |
+| Change production health/config truth | `server/index.ts`, `scripts/smoke-server.mjs` |
+| Change automated domain coverage | `tests/domain.test.ts`, `tsconfig.test.json` |
+| Change CI/build gates | `package.json`, `.github/workflows/ci.yml`, `scripts/*` |
 
-## Important architectural boundary
+## Important boundaries
 
-The current app is a complete local collaborative product simulation. The following require the final Firebase/Firestore phase rather than UI-only code:
+### Local demo today
 
-- real invitation delivery/acceptance;
+The browser-local product supports:
+
+- trips;
+- roles/statuses;
+- locally pending invitations;
+- ideas/voting;
+- itinerary;
+- saved places;
+- expenses/splits/settlements;
+- packing;
+- notes/bookings;
+- history;
+- weather/Maps handoff;
+- Share summary.
+
+### Requires Firestore / hosted collaboration
+
+These are intentionally **not** represented as complete today:
+
+- invitation delivery/acceptance;
 - authenticated private trip membership;
-- cross-device persistence;
-- live multi-user synchronization;
-- secure Owner/Editor/Viewer enforcement;
-- public/private hosted trip links.
+- cross-device storage;
+- realtime multi-user synchronization;
+- database-enforced Owner/Editor/Viewer writes;
+- real private invitation/join URLs;
+- conflict/concurrency behavior across simultaneous editors.
 
-Those features should replace the storage/auth boundary without reworking the existing product screens.
+### Authentication is not persistence
+
+`src/firebase.ts` can enable Google Authentication when environment variables exist. That does not change `persistence: browser-local`, `firestore: false`, or `collaboration: local-demo` until a real hosted data layer is implemented.
 
 ## Verification
 
@@ -71,4 +104,4 @@ npm run check
 npm run smoke:server
 ```
 
-Then execute `docs/QA.md`, including 360px mobile layout, Google Maps handoff, expense split math, collaboration flows, themes, and at least one physical-phone Web Share pass.
+`npm run check` includes strict TypeScript, the pure domain suite, client/server builds, and build-artifact verification. Manual QA then covers browser interaction, provider failure, mobile layouts, touch, focus, and Web Share behavior.
