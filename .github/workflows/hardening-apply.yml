@@ -1,0 +1,51 @@
+name: Apply Wanderline hardening
+
+on:
+  push:
+    branches: [hardening/recruiter-ready-2026-09-01]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wanderline-hardening
+  cancel-in-progress: false
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+          cache: npm
+      - name: Apply source transformations
+        run: node .hardening/apply.mjs
+      - name: Generate reproducible lockfile
+        run: npm install --package-lock-only --include=dev --no-audit --no-fund
+      - name: Install exact dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+      - name: Reject whitespace errors
+        run: git diff --check
+      - name: Run full project verification
+        run: npm run check
+      - name: Smoke-test compiled server
+        run: npm run smoke:server
+      - name: Commit validated hardening changes
+        run: |
+          rm -rf .hardening
+          rm -f .github/workflows/hardening-apply.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No validated changes to commit."
+            exit 0
+          fi
+          git commit -m "Harden Wanderline for recruiter review"
+          git push origin HEAD:${GITHUB_REF_NAME}
