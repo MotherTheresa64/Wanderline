@@ -139,6 +139,23 @@ test('workspace normalization chooses a usable active trip',()=>{
   assert.equal(parsed?.activeTripId,'second');
 });
 
+test('all-archived persisted workspaces recover one usable trip',()=>{
+  const input=structuredClone(demoWorkspace);
+  input.trips[0].archived=true;
+  const parsed=parseWorkspace(input);
+  assert.equal(parsed?.trips[0].archived,false);
+  assert.equal(parsed?.activeTripId,input.trips[0].id);
+});
+
+test('member-less trips and duplicate resource IDs are rejected as corrupt persistence',()=>{
+  const memberless=structuredClone(demoWorkspace);
+  memberless.trips[0].members=[];
+  assert.equal(parseWorkspace(memberless),null);
+  const duplicate=structuredClone(demoWorkspace);
+  duplicate.trips[0].activities.push({...duplicate.trips[0].activities[0]});
+  assert.equal(parseWorkspace(duplicate),null);
+});
+
 test('Google Maps helpers encode special characters and reject blank locations',()=>{
   const search=googleMapsSearch('Sagrada Família, Barcelona');
   assert.match(search,/Sagrada%20Fam%C3%ADlia%2C%20Barcelona/);
