@@ -24,7 +24,16 @@ jobs:
         with:
           node-version: 22.16.0
       - name: Apply source transformations
-        run: node .hardening/apply.mjs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.hardening/apply.mjs')
+          text = path.read_text()
+          text = text.replace('Trip and itinerary dates use `YYYY-MM-DD` as calendar dates', 'Trip and itinerary dates use \\`YYYY-MM-DD\\` as calendar dates')
+          path.write_text(text)
+          PY
+          node --check .hardening/apply.mjs
+          node .hardening/apply.mjs
       - name: Generate reproducible lockfile
         run: npm install --package-lock-only --include=dev --no-audit --no-fund
       - name: Install exact dependencies
