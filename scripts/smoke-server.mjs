@@ -27,7 +27,9 @@ try{
   const health=await waitForHealth();
   const healthPayload=await health.json();
   if(healthPayload.status!=='ok'||healthPayload.service!=='wanderline')throw new Error(`unexpected health payload: ${JSON.stringify(healthPayload)}`);
-  if(!['local-first','auth-ready'].includes(healthPayload.mode))throw new Error(`unexpected runtime mode: ${JSON.stringify(healthPayload)}`);
+  if(healthPayload.mode!=='local-first')throw new Error(`unexpected runtime mode: ${JSON.stringify(healthPayload)}`);
+  if(healthPayload.persistence!=='browser-local')throw new Error(`unexpected persistence mode: ${JSON.stringify(healthPayload)}`);
+  if(!['firebase-configured','demo-identity'].includes(healthPayload.authentication))throw new Error(`unexpected authentication mode: ${JSON.stringify(healthPayload)}`);
 
   const config=await fetch(`${origin}/api/config`);
   if(!config.ok)throw new Error(`expected config endpoint 200, received ${config.status}`);
@@ -35,8 +37,9 @@ try{
   if(configPayload.weather!=='open-meteo')throw new Error(`unexpected weather config: ${JSON.stringify(configPayload)}`);
   if(configPayload.maps!=='google-maps-universal-links')throw new Error(`unexpected maps config: ${JSON.stringify(configPayload)}`);
   if(configPayload.currency!=='USD')throw new Error(`unexpected currency config: ${JSON.stringify(configPayload)}`);
-  if(!['local-demo','auth-ready'].includes(configPayload.collaboration))throw new Error(`unexpected collaboration config: ${JSON.stringify(configPayload)}`);
-  if(typeof configPayload.firebase!=='boolean')throw new Error(`unexpected Firebase config: ${JSON.stringify(configPayload)}`);
+  if(configPayload.collaboration!=='local-demo')throw new Error(`unexpected collaboration config: ${JSON.stringify(configPayload)}`);
+  if(configPayload.persistence!=='browser-local'||configPayload.firestore!==false)throw new Error(`unexpected persistence config: ${JSON.stringify(configPayload)}`);
+  if(typeof configPayload.firebaseAuthConfigured!=='boolean')throw new Error(`unexpected Firebase auth config: ${JSON.stringify(configPayload)}`);
 
   const missing=await fetch(`${origin}/api/__smoke_missing__`);
   if(missing.status!==404)throw new Error(`expected API 404, received ${missing.status}`);
