@@ -1,7 +1,7 @@
 {
   "name": "Wanderline",
   "short_name": "Wanderline",
-  "description": "Collaborative trip planning for itineraries, travelers, shared expenses, saved places, packing, bookings, and group decisions.",
+  "description": "Local-first trip planning for itineraries, travelers, cent-accurate shared expenses, saved places, packing, bookings, and group decision workflows.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,7 +1,7 @@
 import type {Workspace} from './model';
 
 export const demoWorkspace:Workspace={
-  version:3,
+  version:4,
   currentUserId:'noah',
   activeTripId:'barcelona',
   trips:[{

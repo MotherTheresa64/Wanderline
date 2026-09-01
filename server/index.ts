@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 
 const app=express();
 const port=Number(process.env.PORT||8789);
+const firebaseAuthConfigured=Boolean(process.env.VITE_FIREBASE_PROJECT_ID);
 
 app.disable('x-powered-by');
 app.use((_req,res,next)=>{
@@ -19,16 +20,20 @@ app.use('/api',(_req,res,next)=>{res.setHeader('Cache-Control','no-store');next(
 app.get('/api/health',(_req,res)=>res.json({
   status:'ok',
   service:'wanderline',
-  mode:process.env.VITE_FIREBASE_PROJECT_ID?'auth-ready':'local-first',
+  mode:'local-first',
+  authentication:firebaseAuthConfigured?'firebase-configured':'demo-identity',
+  persistence:'browser-local',
   timestamp:new Date().toISOString()
 }));
 
 app.get('/api/config',(_req,res)=>res.json({
-  firebase:Boolean(process.env.VITE_FIREBASE_PROJECT_ID),
+  firebaseAuthConfigured,
+  firestore:false,
+  persistence:'browser-local',
   weather:'open-meteo',
   maps:'google-maps-universal-links',
   currency:'USD',
-  collaboration:process.env.VITE_FIREBASE_PROJECT_ID?'auth-ready':'local-demo'
+  collaboration:'local-demo'
 }));
 
 app.use('/api',(_req,res)=>res.status(404).json({error:'API route not found'}));
