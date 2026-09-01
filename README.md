@@ -1,120 +1,118 @@
 # Wanderline
 
-**Plan together. Travel lighter.** Wanderline is a collaborative travel workspace for planning solo or group trips from the first saved idea through the actual journey. It combines itinerary planning, group decisions, travelers and permissions, saved places, shared expenses, packing, bookings, practical notes, weather, Google Maps actions, and trip history in one responsive consumer product.
+**Plan together. Travel lighter.** Wanderline is a local-first travel-planning workspace for solo and group trips. It takes a trip from early ideas through itinerary, travelers, saved places, actual expenses, packing, bookings, notes, weather, and the journey itself.
 
 **Live demo:** https://wanderline-s1yv.onrender.com
 
-## What works today
+> **Cloud status:** the current public build is a complete browser-local product demo. Owner/Editor/Viewer roles, pending invitations, voting, and group workflows are modeled and enforced in the client, but they do **not** synchronize between users or devices yet. Firebase Authentication is scaffolded; Firestore persistence, invitation delivery, authenticated membership, and realtime collaboration remain an explicit hosted-data phase.
 
-### Trips and collaboration
+## Product capabilities
 
-- Create and switch between multiple trips
-- Edit trip name, destination, dates, description, and USD budget
-- Archive or permanently delete trips
-- Solo trips work without collaboration clutter
-- Add pending traveler invitations in the credential-free demo
-- Owner, Editor, and Viewer roles are modeled and enforced in the UI
-- Owners can change member roles or remove travelers
-- Shared activity history records meaningful trip changes
-- The local data model already matches the Firebase/Firestore collaboration boundary planned for the authenticated release
+### Trips and dates
 
-### Collaborative planning
+- Create and switch between multiple trips.
+- Edit destination, description, dates, and USD budget.
+- Archive/delete trips while preserving a usable active-trip invariant.
+- Date-only helpers intentionally avoid local-timezone shifts for itinerary days.
+- Changing a trip's date range reconciles existing activities and reservations onto the nearest valid trip day instead of orphaning them.
+- Day tabs and itinerary ordering derive from canonical trip/activity state.
 
-- Dedicated **Ideas** workspace keeps suggestions out of the confirmed itinerary
-- Travelers can vote on suggested activities
-- Editors can promote ideas to Planned or Confirmed
-- Activities support Suggested, Planned, Confirmed, and Completed states
-- Each plan records who added it and which travelers are attending
+### Ideas → itinerary
 
-### Day-by-day itinerary
+- Suggestions live in **Ideas**, not as duplicate itinerary objects.
+- Active travelers can vote/unvote.
+- Editors can promote an idea to Planned or Confirmed.
+- Activities use one shared model across Suggested, Planned, Confirmed, and Completed states.
+- Attendees, creator, location, date/time, duration, notes, category, and estimated cost stay attached to that single canonical activity.
 
-- One clean chronological timeline with **one card per activity** — no duplicate floating itinerary cards
-- Day tabs derived from the trip's real start/end dates
-- Add, edit, delete, complete, and reopen activities
-- Time, place, category, duration, notes, attendees, and USD estimated cost
-- Chronological sorting within each day
-- Direct Google Maps place lookup and walking directions from itinerary items
-- Responsive timeline that reformats for narrow phones rather than overlapping or requiring desktop-width content
+### Travelers and roles
 
-### Saved places
+- **Owner:** trip settings, member management, destructive trip actions, full editing.
+- **Editor:** itinerary, ideas, saved places, expenses, packing, notes, and bookings.
+- **Viewer:** read-only planning access; active viewers may still vote on ideas.
+- Pending and removed travelers cannot mutate trip resources.
+- Removing a traveler does not silently corrupt financial or responsibility data: removal is blocked until referenced expenses/shared packing are reassigned or removed.
+- Former active travelers are retained as lightweight tombstones so historical authorship/activity logs remain understandable while live attendee/vote references are cleaned up.
 
-- Add, edit, search, and remove saved places
-- Store category, neighborhood, notes, and who saved the place
-- Open a place in Google Maps
-- Convert a saved place directly into a prefilled itinerary activity
+### Cent-accurate shared expenses
 
-### Budget and shared expenses
+Wanderline treats money as a domain concern rather than presentation math.
 
-- USD-first presentation throughout the product
-- Overall budget, spent amount, remaining balance, and usage percentage
-- Add, edit, search, categorize, and delete expenses
-- Track who paid
-- Personal, equal, and custom split modes
-- Choose which travelers participate in an expense
-- Custom-share validation ensures entered splits match the expense total
-- Derived per-traveler paid/share/balance figures
-- Settlement suggestions such as who owes whom and how much
+- Actual expenses are separate from itinerary estimated costs, so budget totals do not double-count planning estimates.
+- **Personal:** the responsible traveler is explicit and may differ from the person who paid.
+- **Equal:** amounts are converted to integer cents and remainder cents are distributed deterministically. `$10.00 / 3` becomes `$3.34 + $3.33 + $3.33`, never a hidden `$9.99` total.
+- **Custom:** every share must be nonnegative and the selected shares must equal the expense total exactly to the cent.
+- Paid/share/balance values derive from canonical expenses.
+- Settlement suggestions operate in integer cents and terminate without floating-point residuals.
 
-### Packing
+### Saved places and Google Maps
 
-- Personal and shared packing items
-- Assign responsibility for shared gear to a traveler
-- Completion tracking and preparation progress
-- Add, complete/reopen, and remove packing items
+- Add, edit, search, and remove saved places.
+- Store category, neighborhood, notes, and author.
+- Convert a saved place into a prefilled itinerary activity without deleting the saved place.
+- Google Maps search and walking-direction handoffs use encoded universal URLs, so current map features require no paid Maps SDK or API key.
 
-### Notes and bookings
+### Weather
 
-- Shared trip notes with author and update time
-- Add, edit, and delete notes
-- Store flights, hotels, rental cars, restaurants, events, and other reservations
-- Dates, times, locations, confirmation/reference numbers, and practical notes
-- Open booking locations in Google Maps
+- Destination-aware current conditions use Open-Meteo.
+- Geocoding considers multiple candidates and scores them against the full destination rather than blindly taking the first city-name match.
+- Successful weather results are cached briefly.
+- Aborted, slow, failed, or empty provider responses degrade to “Weather unavailable” and never block trip planning.
 
-### Search, weather, sharing, and personalization
+### Packing, notes, and bookings
 
-- Global search across activities, places, expenses, notes, bookings, and travelers
-- `Ctrl/Cmd + K` keyboard shortcut to focus trip search
-- Destination-aware current weather using the keyless Open-Meteo geocoding + forecast APIs
-- Native Web Share with clipboard fallback
-- Google Maps universal search/directions links — no Google Maps API key or billing setup required for current map actions
-- Four persisted themes: **Sunset, Coast, Terracotta, and Night train**
-- Browser theme-color follows the selected appearance
-- Branded runtime recovery and one-click sample-workspace reset
+- Personal and shared packing items with explicit responsibility and completion progress.
+- Duplicate identical packing assignments are prevented in the add flow.
+- Shared notes preserve author/update semantics.
+- Reservations support type, date, time, location, confirmation/reference, and notes.
+- Booking dates stay within the trip date range.
+- Confirmation/reference values are intentionally excluded from Share summary output.
 
-### Mobile and production behavior
+### Search, sharing, themes, and recovery
 
-- Desktop, laptop, tablet, phone portrait, phone landscape, and narrow ~360px layouts
-- Off-canvas phone navigation with backdrop
-- Forms and modals remain scrollable inside small viewports
-- Touch-friendly controls and visible keyboard focus
-- Reduced-motion support
-- Local workspace persistence with defensive recovery when browser storage is malformed or unavailable
-- Express production host with health/config endpoints, secure headers, API 404 handling, caching policy, and SPA fallback
-- GitHub Actions runs `npm run check` plus the compiled-server smoke test
-- Render tracks `main` with Auto-Deploy
+- Global search spans activities, places, expenses, notes, bookings, and travelers.
+- `Ctrl/Cmd + K` focuses search.
+- **Share summary** uses Web Share where available with clipboard fallback; it shares non-sensitive trip summary text only and does not pretend the current page URL is an invitation/join link.
+- Four persisted dark travel themes: Sunset, Coast, Terracotta, and Night train.
+- Theme picker traps/restores keyboard focus and supports Escape.
+- Branded error recovery can reload or clear only Wanderline workspace data.
+
+## Responsive and accessibility behavior
+
+The UI is designed as a consumer travel app rather than a desktop dashboard squeezed onto a phone.
+
+- Off-canvas phone navigation with backdrop.
+- Horizontal day navigation on narrow screens.
+- Mobile expense/traveler rows reflow instead of overflowing.
+- One-column cards for ideas, places, packing, and notes at phone widths.
+- Scrollable small-screen modals with safe-area padding.
+- Functional mobile controls target touch-friendly sizing.
+- Visible keyboard focus, dialog focus trapping/restoration, form labels/errors, live status/error feedback, semantic progress values, and reduced-motion support.
+- Responsive QA targets include 360px phone portrait, ordinary phone, phone landscape, tablet, laptop, and desktop.
 
 ## Stack
 
 **Frontend:** React 19, TypeScript, Vite, Lucide, custom responsive/themed CSS  
-**Auth boundary:** Firebase Authentication (Google sign-in scaffolded; final integration pending)  
-**Hosted collaboration boundary:** Firestore or equivalent (final integration pending)  
+**Current persistence:** validated/versioned browser-local workspace (`wanderline-workspace-v4`)  
+**Migration:** valid v3 workspaces are normalized and migrated automatically  
+**Authentication boundary:** Firebase Authentication / Google sign-in scaffold  
+**Realtime collaboration boundary:** Firestore — not implemented yet  
 **Weather:** Open-Meteo  
-**Maps:** Google Maps universal links  
-**Currency:** USD  
-**Current persistence:** typed/versioned local-first collaborative workspace  
-**Hosting:** Express 5 + Render  
-**Quality:** strict TypeScript, GitHub Actions, production smoke testing, pinned dependencies
+**Maps:** Google Maps universal URLs  
+**Currency:** USD, cent-based domain calculations  
+**Production host:** Express 5 + Render  
+**Quality:** strict TypeScript, Node test runner via `tsx`, GitHub Actions, production artifact verification, server smoke testing
 
 ## Local development
 
-Requires Node `22.16+`.
+Use Node `22.16.0` (see `.nvmrc`).
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app is fully reviewable without credentials. The Barcelona sample workspace and all local edits are stored under the versioned `wanderline-workspace-v2` browser key. Appearance is persisted separately.
+No external credential is required to review the complete local product demo.
 
 Full verification:
 
@@ -123,13 +121,28 @@ npm run check
 npm run smoke:server
 ```
 
-`npm run check` typechecks both TypeScript targets, builds the Vite client and Express host, and verifies production artifacts. `npm run smoke:server` starts the compiled server on a temporary port and validates its API contract.
+`npm run check` now runs:
 
-## Firebase / Firestore final integration
+1. React/client TypeScript checks;
+2. Express/server TypeScript checks;
+3. domain-test TypeScript checks;
+4. focused automated domain tests;
+5. Vite + Express production builds;
+6. required artifact verification.
 
-The UI and domain model are intentionally complete before cloud wiring. Firebase Authentication should provide identity, while Firestore should replace the local storage adapter for actual cross-device/shared trips.
+The automated domain suite covers date-only behavior, invalid ranges, equal/custom/personal expense semantics, exact-cent balances/settlements, trip-date reconciliation, permissions, owner/member-removal invariants, v3→v4 persistence migration, malformed local data, active-trip recovery, and Maps encoding.
 
-Configure the existing Firebase client seam with:
+## Production API
+
+The tiny Express host is intentionally not a fake collaboration backend.
+
+- `GET /api/health` — service status plus `mode: local-first`, authentication readiness, and `persistence: browser-local`.
+- `GET /api/config` — non-secret integration facts including `firestore: false`, `collaboration: local-demo`, weather/maps/currency, and Firebase Authentication configuration status.
+- unknown `/api/*` — JSON `404`.
+
+## Firebase / Firestore next phase
+
+The repository includes the Firebase web-config seam:
 
 ```env
 VITE_FIREBASE_API_KEY=
@@ -138,55 +151,27 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_APP_ID=
 ```
 
-Enable Google Authentication and authorize the Render hostname.
+Configuring those values enables the existing Google Authentication client, but **authentication alone does not make Wanderline collaborative**.
 
-The hosted data model should persist at minimum:
+To complete real hosted collaboration:
 
-- users
-- trips
-- trip members / roles / invitations
-- activities and votes
-- saved places
-- expenses, participants, and custom shares
-- packing items
-- trip notes
-- reservations
-- activity history
-
-Firestore security rules must enforce trip membership and owner-only operations. Once cloud persistence is connected, pending local invitations become real invitations, collaborator changes synchronize between devices, and private trip links can resolve against authenticated membership.
-
-## External services
-
-No Maps or Weather secret is required for the current app:
-
-- **Google Maps:** standard universal URLs for place search and directions
-- **Open-Meteo:** public geocoding and current-weather endpoints
-
-This keeps the recruiter-facing demo immediately usable without quotas, billing configuration, or exposed provider secrets.
-
-## Production API
-
-- `GET /api/health` — service readiness and local/auth-ready mode
-- `GET /api/config` — non-secret integration/currency/collaboration information
-- unknown `/api/*` — JSON `404`
+1. Create/choose a Firebase project and web app.
+2. Enable Google Authentication and authorize the deployed hostname.
+3. Add Firestore.
+4. Persist trip resources with real ownership boundaries: trips, membership/invitations, activities/votes, places, expenses/splits, packing, notes, reservations, and history.
+5. Add authenticated realtime listeners and repository/data adapters behind the current persistence seam.
+6. Enforce membership and Owner/Editor/Viewer writes in Firestore Security Rules; never rely on React `canEdit` for security.
+7. Implement actual invitation acceptance and private trip-link resolution.
+8. Add concurrency/conflict handling where simultaneous edits can occur.
+9. Only then change UI/metadata/API status from local demo to realtime collaboration.
 
 ## Engineering docs
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — collaborative domain, local/cloud boundary, roles, expense splitting, maps/weather, and deployment shape
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — local/Render/Firebase deployment runbook
-- [`docs/QA.md`](docs/QA.md) — functional, collaboration, mobile, map, budget, theme, and production acceptance checks
-- [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) — current source ownership map
-
-## Deployment
-
-The production Render service tracks `main` with Auto-Deploy enabled:
-
-```text
-GitHub main → npm install → npm run check → Express host → /api/health → live
-```
-
-GitHub Actions additionally runs the compiled-server smoke test before a commit is considered clean.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — domain boundaries, invariants, money/date design, local/cloud boundary.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — verification, Render, and Firebase/Firestore rollout.
+- [`docs/QA.md`](docs/QA.md) — functional, failure, responsive, accessibility, and production acceptance checks.
+- [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) — source ownership and where to make common changes.
 
 ## Portfolio intent
 
-Wanderline demonstrates more than itinerary CRUD. The application models a consumer collaboration problem with multiple resources and permissions: personal/group trips, roles, suggestions and voting, shared financial calculations, responsibility assignment, global search, third-party data, Google Maps handoff, persistent personalization, responsive interaction design, error recovery, CI, and a clean migration path from a credential-free local product to authenticated real-time cloud collaboration.
+Wanderline is intentionally not a collection of technologies added for resume keywords. Its engineering story is travel-domain correctness: date-only modeling, role-aware state transitions, cent-accurate group expense logic, reference-safe member removal, resilient third-party integrations, versioned persistence, responsive consumer UX, accessibility, testable pure helpers, CI, and an honest migration path from a credential-free public demo to authenticated realtime collaboration.
