@@ -34,6 +34,11 @@ jobs:
           PY
           node --check .hardening/apply.mjs
           node .hardening/apply.mjs
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/App.tsx')
+          path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines()) + '\n')
+          PY
       - name: Generate reproducible lockfile
         run: npm install --package-lock-only --include=dev --no-audit --no-fund
       - name: Install exact dependencies
