@@ -19,6 +19,7 @@ function string(value:unknown):value is string{return typeof value==='string'}
 function number(value:unknown):value is number{return typeof value==='number'&&Number.isFinite(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(string)}
 function enumValue<T extends string>(value:unknown,values:Set<string>):value is T{return string(value)&&values.has(value)}
+function uniqueItemIds(items:Array<{id:string}>){return new Set(items.map(item=>item.id)).size===items.length&&items.every(item=>item.id.trim().length>0)}
 
 function isMember(value:unknown):value is TripMember{
   if(!object(value))return false;
@@ -66,13 +67,16 @@ function arrayOf<T>(value:unknown,guard:(item:unknown)=>item is T):value is T[]{
 
 function isTrip(value:unknown):value is Trip{
   if(!object(value))return false;
-  return string(value.id)&&string(value.name)&&string(value.destination)&&string(value.startDate)&&string(value.endDate)&&string(value.description)&&number(value.budget)&&typeof value.archived==='boolean'&&arrayOf(value.members,isMember)&&arrayOf(value.activities,isActivity)&&arrayOf(value.places,isPlace)&&arrayOf(value.expenses,isExpense)&&arrayOf(value.packing,isPacking)&&arrayOf(value.notes,isNote)&&arrayOf(value.reservations,isReservation)&&arrayOf(value.history,isHistory);
+  const scalars=string(value.id)&&string(value.name)&&string(value.destination)&&string(value.startDate)&&string(value.endDate)&&string(value.description)&&number(value.budget)&&typeof value.archived==='boolean';
+  if(!scalars||!arrayOf(value.members,isMember)||!arrayOf(value.activities,isActivity)||!arrayOf(value.places,isPlace)||!arrayOf(value.expenses,isExpense)||!arrayOf(value.packing,isPacking)||!arrayOf(value.notes,isNote)||!arrayOf(value.reservations,isReservation)||!arrayOf(value.history,isHistory))return false;
+  if(value.members.length===0)return false;
+  return uniqueItemIds(value.members)&&uniqueItemIds(value.activities)&&uniqueItemIds(value.places)&&uniqueItemIds(value.expenses)&&uniqueItemIds(value.packing)&&uniqueItemIds(value.notes)&&uniqueItemIds(value.reservations)&&uniqueItemIds(value.history);
 }
 
 export function parseWorkspace(value:unknown):Workspace|null{
   if(!object(value))return null;
   if(value.version!==3&&value.version!==4)return null;
-  if(!string(value.currentUserId)||!string(value.activeTripId)||!arrayOf(value.trips,isTrip)||value.trips.length===0)return null;
+  if(!string(value.currentUserId)||!string(value.activeTripId)||!arrayOf(value.trips,isTrip)||value.trips.length===0||!uniqueItemIds(value.trips))return null;
   const trips=value.trips.some(trip=>!trip.archived)?value.trips:value.trips.map((trip,index)=>index===0?{...trip,archived:false}:trip);
   const workspace={version:4,currentUserId:value.currentUserId,activeTripId:value.activeTripId,trips} satisfies Workspace;
   return normalizeWorkspace(workspace);
