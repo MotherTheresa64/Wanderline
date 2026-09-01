@@ -6,6 +6,7 @@ import {initializeThemes} from './theme';
 import './themes.css';
 import './app-v2.css';
 import './accessibility.css';
+import './production.css';
 
 initializeThemes();
 
