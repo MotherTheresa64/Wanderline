@@ -369,7 +369,7 @@ export function reconcileTripDateRange(trip:Trip,startDate:string,endDate:string
   return {trip:{...trip,startDate,endDate,activities,reservations},movedActivities,movedReservations};
 }
 
-export function changeMemberRole(trip:Trip,memberId:string,role:MemberRole){
+export function changeMemberRole(trip:Trip,memberId:string,role:MemberRole):{trip:Trip;error:string|null}{
   const member=trip.members.find(item=>item.id===memberId);
   if(!member)return {trip,error:'Traveler not found.'};
   if(member.status!=='active')return {trip,error:'Only active travelers can have their role changed.'};
@@ -380,7 +380,7 @@ export function changeMemberRole(trip:Trip,memberId:string,role:MemberRole){
   return {trip:{...trip,members:trip.members.map(item=>item.id===memberId?{...item,role}:item)},error:null};
 }
 
-export function removeTripMember(trip:Trip,memberId:string){
+export function removeTripMember(trip:Trip,memberId:string):{trip:Trip;error:string|null}{
   const member=trip.members.find(item=>item.id===memberId);
   if(!member)return {trip,error:'Traveler not found.'};
   if(member.status==='removed')return {trip,error:'That traveler has already been removed.'};
