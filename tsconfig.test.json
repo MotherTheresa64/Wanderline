@@ -1,0 +1,5 @@
+{
+  "extends":"./tsconfig.json",
+  "compilerOptions":{"types":["node"],"noEmit":true},
+  "include":["tests/**/*.ts","src/model.ts","src/maps.ts","src/storage.ts","src/demo.ts"]
+}
