@@ -41,6 +41,9 @@ jobs:
           lint = Path('scripts/lint-repo.mjs')
           text = lint.read_text().replace("const failures=[];for(const file of files){", "const failures=[];for(const file of files.filter(file=>file!=='scripts/lint-repo.mjs')){")
           lint.write_text(text)
+          storage = Path('src/storage.ts')
+          text = storage.read_text().replace("function textArray(value:unknown){return Array.isArray(value)&&value.every(text)}", "function textArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(text)}")
+          storage.write_text(text)
           PY
       - name: Generate reproducible lockfile
         run: npm install --package-lock-only --include=dev --no-audit --no-fund
