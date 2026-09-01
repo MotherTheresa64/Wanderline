@@ -114,12 +114,24 @@ export type Workspace={
   trips:Trip[];
 };
 
+const DATE_ONLY=/^(\d{4})-(\d{2})-(\d{2})$/;
+
+export function toCents(value:number){
+  if(!Number.isFinite(value))return 0;
+  return Math.round((value+Number.EPSILON)*100);
+}
+
+export function fromCents(value:number){return value/100}
+export function normalizeMoney(value:number){return fromCents(toCents(value))}
+
 export function money(value:number){
-  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:value%1===0?0:2}).format(value);
+  const safe=normalizeMoney(value);
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:safe%1===0?0:2}).format(safe);
 }
 
 export function compactMoney(value:number){
-  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:value>=10_000?'compact':'standard',maximumFractionDigits:1}).format(value);
+  const safe=normalizeMoney(value);
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:Math.abs(safe)>=10_000?'compact':'standard',maximumFractionDigits:1}).format(safe);
 }
 
 export function initials(name:string){
@@ -127,19 +139,34 @@ export function initials(name:string){
   return (parts.length>1?`${parts[0][0]}${parts.at(-1)?.[0]??''}`:parts[0]?.slice(0,2)??'?').toUpperCase();
 }
 
+export function isDateOnly(value:string){
+  const match=DATE_ONLY.exec(value);
+  if(!match)return false;
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+  const date=new Date(Date.UTC(year,month-1,day));
+  return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;
+}
+
 export function dateOnly(value:string){
+  if(!isDateOnly(value))throw new RangeError(`Invalid date-only value: ${value}`);
   const [year,month,day]=value.split('-').map(Number);
   return new Date(Date.UTC(year,month-1,day));
 }
 
+export function isValidDateRange(start:string,end:string){
+  return isDateOnly(start)&&isDateOnly(end)&&dateOnly(end).getTime()>=dateOnly(start).getTime();
+}
+
 export function daysBetween(start:string,end:string){
-  return Math.max(1,Math.round((dateOnly(end).getTime()-dateOnly(start).getTime())/86_400_000)+1);
+  if(!isValidDateRange(start,end))return 0;
+  return Math.round((dateOnly(end).getTime()-dateOnly(start).getTime())/86_400_000)+1;
 }
 
 export function tripDates(start:string,end:string){
   const result:string[]=[];
-  const first=dateOnly(start);
   const total=daysBetween(start,end);
+  if(total===0)return result;
+  const first=dateOnly(start);
   for(let index=0;index<total;index++){
     const next=new Date(first.getTime()+index*86_400_000);
     result.push(next.toISOString().slice(0,10));
@@ -173,17 +200,23 @@ export function tripProgress(trip:Trip){
 }
 
 export function expenseShare(expense:Expense,memberId:string){
-  if(!expense.participantIds.includes(memberId))return 0;
-  if(expense.splitMode==='personal')return expense.paidBy===memberId?expense.amount:0;
-  if(expense.splitMode==='custom')return Math.max(0,expense.customShares?.[memberId]??0);
-  return expense.amount/Math.max(expense.participantIds.length,1);
+  const participants=[...new Set(expense.participantIds)];
+  const index=participants.indexOf(memberId);
+  if(index<0)return 0;
+  const total=toCents(expense.amount);
+  if(expense.splitMode==='personal')return expense.paidBy===memberId?fromCents(total):0;
+  if(expense.splitMode==='custom')return fromCents(Math.max(0,toCents(expense.customShares?.[memberId]??0)));
+  const count=Math.max(participants.length,1);
+  const base=Math.floor(total/count);
+  const remainder=total%count;
+  return fromCents(base+(index<remainder?1:0));
 }
 
 export function balances(trip:Trip){
   const active=trip.members.filter(member=>member.status==='active');
   return active.map(member=>{
-    const paid=trip.expenses.filter(expense=>expense.paidBy===member.id).reduce((sum,expense)=>sum+expense.amount,0);
-    const share=trip.expenses.reduce((sum,expense)=>sum+expenseShare(expense,member.id),0);
-    return {member,paid,share,balance:paid-share};
+    const paidCents=trip.expenses.filter(expense=>expense.paidBy===member.id).reduce((sum,expense)=>sum+toCents(expense.amount),0);
+    const shareCents=trip.expenses.reduce((sum,expense)=>sum+toCents(expenseShare(expense,member.id)),0);
+    return {member,paid:fromCents(paidCents),share:fromCents(shareCents),balance:fromCents(paidCents-shareCents)};
   });
 }
