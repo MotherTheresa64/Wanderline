@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: wanderline-hardening
@@ -57,16 +57,14 @@ jobs:
         run: npm run check
       - name: Smoke-test compiled server
         run: npm run smoke:server
-      - name: Commit validated hardening changes
+      - name: Prepare validated source bundle
         run: |
           rm -rf .hardening
           rm -f .github/workflows/hardening-apply.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No validated changes to commit."
-            exit 0
-          fi
-          git commit -m "Harden Wanderline for recruiter review"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=dist-server -czf /tmp/wanderline-hardened.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wanderline-hardened-source
+          path: /tmp/wanderline-hardened.tgz
+          if-no-files-found: error
+          retention-days: 1
