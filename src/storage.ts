@@ -73,7 +73,8 @@ export function parseWorkspace(value:unknown):Workspace|null{
   if(!object(value))return null;
   if(value.version!==3&&value.version!==4)return null;
   if(!string(value.currentUserId)||!string(value.activeTripId)||!arrayOf(value.trips,isTrip)||value.trips.length===0)return null;
-  const workspace={version:4,currentUserId:value.currentUserId,activeTripId:value.activeTripId,trips:value.trips} satisfies Workspace;
+  const trips=value.trips.some(trip=>!trip.archived)?value.trips:value.trips.map((trip,index)=>index===0?{...trip,archived:false}:trip);
+  const workspace={version:4,currentUserId:value.currentUserId,activeTripId:value.activeTripId,trips} satisfies Workspace;
   return normalizeWorkspace(workspace);
 }
 
