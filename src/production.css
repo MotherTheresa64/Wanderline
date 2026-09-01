@@ -1,0 +1,38 @@
+/* Final interaction/responsive hardening layer. Keep these rules additive so the visual system can evolve independently. */
+html{overflow-x:clip;scrollbar-gutter:stable}body{min-width:320px;overflow-x:clip}button,input,select,textarea{max-width:100%}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--theme-accent) 42%,transparent);outline-offset:2px}.wl-app{isolation:isolate}.wl-main,.wl-page,.wl-page-inner,.wl-panel,.wl-activity-card,.wl-booking-list article{min-width:0}.wl-toast{pointer-events:none}.wl-search-results{max-height:min(62vh,520px);overflow:auto;overscroll-behavior:contain}.wl-modal{overscroll-behavior:contain;scrollbar-gutter:stable}.wl-modal-close,.wl-icon-button,.wl-mobile-menu,.wl-check,.wl-card-actions button,.wl-booking-list article>div:last-child button,.wl-traveler-list>div>button{min-width:44px;min-height:44px}.wl-day-tabs button,.wl-nav button,.wl-trip-menu>button,.wl-search-results button{touch-action:manipulation}.wl-share{position:relative}.wl-overlay{overscroll-behavior:contain}.wl-sidebar{overscroll-behavior:contain}.wl-mobile-backdrop{touch-action:none}
+
+@media(max-width:920px){
+  .wl-sidebar{width:min(88vw,340px);padding-top:max(18px,env(safe-area-inset-top));padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .wl-header{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  .wl-page-inner{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+  .theme-control{right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom))}
+  .wl-toast{right:max(14px,env(safe-area-inset-right));bottom:calc(72px + env(safe-area-inset-bottom))!important}
+}
+
+@media(max-width:700px){
+  .wl-header{height:calc(62px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+  .wl-mobile-menu,.wl-share{width:44px;height:44px;min-width:44px;min-height:44px}
+  /* Keep the icon-only share action accessible to screen readers on phones. */
+  .wl-share span{display:block!important;position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  .wl-page-inner{padding-left:14px;padding-right:14px}
+  .wl-hero{border-radius:18px}.wl-hero h1{font-size:clamp(40px,13vw,54px);overflow-wrap:anywhere}
+  .wl-hero-actions{grid-template-columns:1fr}.wl-hero-actions button{min-height:46px}
+  .wl-stat{padding:15px 13px}.wl-stat>strong{font-size:21px}
+  .wl-day-tabs{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px;scroll-snap-type:x proximity;overscroll-behavior-x:contain}.wl-day-tabs button{scroll-snap-align:start;min-width:min(150px,42vw)}
+  .wl-timeline-row{grid-template-columns:48px 21px minmax(0,1fr)}
+  .wl-time b{font-size:9px}.wl-activity-card{padding:13px}
+  .wl-expense-row,.wl-traveler-list>div,.wl-booking-list article{overflow-wrap:anywhere}
+  .wl-overlay{place-items:end center;padding:0;background:#07100fa8}
+  .wl-modal{width:100%;max-height:min(92dvh,820px);border-radius:20px 20px 0 0;border-bottom:0;padding:22px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -24px 80px #0008}
+  .wl-form-grid,.wl-check-grid{grid-template-columns:1fr}.wl-custom-splits label{grid-template-columns:minmax(0,1fr) minmax(92px,34%)}
+  .wl-form-submit,.wl-form-actions .danger,.wl-subhead>button,.wl-primary{min-height:46px}
+  .wl-trip-menu{top:calc(70px + env(safe-area-inset-top));max-height:calc(100dvh - 88px - env(safe-area-inset-top));overflow:auto;overscroll-behavior:contain}
+  .theme-panel{left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:calc(68px + env(safe-area-inset-bottom));max-height:70dvh;overflow:auto}
+}
+
+@media(max-width:390px){
+  .wl-page-inner{padding-left:11px;padding-right:11px}.wl-header{padding-left:10px;padding-right:10px}.wl-search{padding:0 6px}.wl-hero{padding:26px 16px}.wl-stat-grid{grid-template-columns:1fr}.wl-stat{border-right:0!important;border-bottom:1px solid var(--theme-line)}.wl-stat:last-child{border-bottom:0}.wl-day-tabs{margin-left:-11px;margin-right:-11px;padding-left:11px;padding-right:11px}.wl-timeline-row{grid-template-columns:43px 19px minmax(0,1fr);gap:5px}.wl-activity-card{padding:11px}.wl-category{width:32px;height:32px}.wl-form-title{grid-template-columns:1fr;padding-right:42px}.wl-form-title>span{display:none}}
+
+@media(hover:none) and (pointer:coarse){button{min-height:44px}.wl-reset{min-height:44px}.wl-profile{min-height:58px}.wl-card-actions button{min-width:44px}.wl-nav button{min-height:46px}}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.wl-sidebar,.wl-modal,.wl-toast,.wl-search,.wl-trip-menu,.wl-activity-card,.wl-panel,.wl-day-tabs button{transition:none!important;animation:none!important}}
