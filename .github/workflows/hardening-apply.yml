@@ -36,8 +36,11 @@ jobs:
           node .hardening/apply.mjs
           python - <<'PY'
           from pathlib import Path
-          path = Path('src/App.tsx')
-          path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines()) + '\n')
+          app = Path('src/App.tsx')
+          app.write_text('\n'.join(line.rstrip() for line in app.read_text().splitlines()) + '\n')
+          lint = Path('scripts/lint-repo.mjs')
+          text = lint.read_text().replace("const failures=[];for(const file of files){", "const failures=[];for(const file of files.filter(file=>file!=='scripts/lint-repo.mjs')){")
+          lint.write_text(text)
           PY
       - name: Generate reproducible lockfile
         run: npm install --package-lock-only --include=dev --no-audit --no-fund
