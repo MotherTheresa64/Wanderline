@@ -1,0 +1,17 @@
+/* Portfolio visual direction: dark route-planning workspace with luminous travel teal. */
+html[data-theme="coast"]{
+  --theme-bg:#050c13;--theme-sidebar:#07151e;--theme-surface:#0a1721;--theme-surface-2:#0d1e29;
+  --theme-surface-3:#142b38;--theme-line:#1e3b46;--theme-text:#f1faf9;--theme-muted:#8da8ad;
+  --theme-accent:#36e1c4;--theme-accent-2:#39aeea;--theme-green:#25c9aa;--theme-soft:#12352f;--theme-shadow:#000a;
+}
+body{background:radial-gradient(circle at 90% -8%,#0a7c8240,transparent 28%),radial-gradient(circle at 12% 110%,#1638713b,transparent 34%),var(--theme-bg)!important}
+.wl-app{grid-template-columns:244px minmax(0,1fr);background:transparent}.wl-sidebar{width:244px;padding:22px 15px;background:linear-gradient(180deg,#071720,#050d14)!important;border-right-color:#183642!important}
+.wl-brand{letter-spacing:-.02em}.wl-brand>span:first-child{color:#45e3c8;box-shadow:0 0 26px #36e1c42b}.wl-nav button{min-height:42px;border-radius:10px}.wl-nav button.active{background:linear-gradient(90deg,#0f4543,#0d3034)!important;color:#d8fff8!important}
+.wl-header{height:72px;background:#060e16df!important;border-bottom-color:#193541!important}.wl-page-inner{max-width:1560px;padding:34px 34px 70px}.wl-page-head h1{font-family:Inter,system-ui,sans-serif!important;letter-spacing:-.035em}
+.wl-primary,.wl-new-trip,.wl-form-submit{background:linear-gradient(135deg,#53e6ce,#21bda2)!important;color:#041512!important;border-radius:10px;box-shadow:0 9px 26px #28c9ac25}
+.wl-hero{border-radius:18px;border-color:#23505a!important;background:radial-gradient(circle at 80% 20%,#15798643,transparent 30%),linear-gradient(135deg,#0d202d,#09151f)!important;box-shadow:0 22px 60px #0006}.wl-hero h1{font-family:Inter,system-ui,sans-serif!important;letter-spacing:-.045em}.wl-hero h1 em{color:#43e0c4}
+.wl-panel,.wl-stat-grid,.wl-activity-card,.wl-idea-card,.wl-place-card,.wl-route-card,.wl-tip-card,.wl-budget-hero,.wl-note-grid article,.wl-booking-list article,.wl-role-guide>div{border-radius:15px!important;border-color:#1b3945!important;background:linear-gradient(145deg,#0b1923,#08131c)!important;box-shadow:0 17px 44px #0003}
+.wl-stat{min-height:116px}.wl-stat svg,.wl-kicker{color:#43dfc4!important}.wl-weather,.wl-search,.wl-icon-button{border-radius:10px}.wl-trip-button{border-radius:11px!important}.wl-member-stack span{box-shadow:0 0 0 2px #091721}
+.theme-toggle{border-radius:12px}
+@media(max-width:920px){.wl-app{display:block}.wl-sidebar{width:min(84vw,310px)}.wl-page-inner{padding:28px 20px 82px}}
+@media(max-width:700px){.wl-header{height:64px}.wl-page-inner{padding:22px 14px 82px}.wl-hero{border-radius:16px}.wl-panel,.wl-activity-card,.wl-idea-card,.wl-place-card{border-radius:13px!important}}

@@ -1,10 +1,10 @@
 type ThemeId='sunset'|'coast'|'terracotta'|'night';
 type ThemeOption={id:ThemeId;label:string;description:string;colors:[string,string];browserColor:string};
-const STORAGE_KEY='wanderline-theme-v1';
-const DEFAULT_THEME:ThemeId='sunset';
+const STORAGE_KEY='wanderline-theme-v2';
+const DEFAULT_THEME:ThemeId='coast';
 const themes:ThemeOption[]=[
   {id:'sunset',label:'Sunset',description:'Dark Mediterranean green with coral warmth',colors:['#101817','#e17a59'],browserColor:'#101817'},
-  {id:'coast',label:'Coast',description:'Deep ocean blue with sea-glass accents',colors:['#0f181c','#62aeb8'],browserColor:'#0f181c'},
+  {id:'coast',label:'Coast',description:'Deep ocean ink with bright route teal',colors:['#06131d','#36e1c4'],browserColor:'#050c13'},
   {id:'terracotta',label:'Terracotta',description:'Dark clay and olive with warm copper accents',colors:['#171411','#d9795d'],browserColor:'#171411'},
   {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#11191e','#e5a76f'],browserColor:'#11191e'}
 ];
