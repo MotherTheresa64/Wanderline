@@ -1,360 +1,506 @@
-/* Wanderline — "Night map" theme.
-   The app is a shared planning desk for a trip: maps, routes, times, money.
-   So the surface is deep map ink with a faint grid, actions are lantern amber,
-   routes and progress are sage, and headlines keep the printed-guide serif.
-   Scoped to the default theme id; every appearance option stays dark. */
+/* Wanderline — the Night map design system.
+   One layout, one type scale, one set of component rules for every
+   appearance. The four palettes below only change colour tokens, so
+   switching theme repaints the workspace instead of rebuilding it. */
 
+/* --- Palettes ---------------------------------------------------------
+   Every appearance is dark and keeps the same layout, type scale and
+   component rules. Only these tokens change between them, so switching
+   theme repaints the workspace without reflowing it. */
+
+/* Night map */
 html[data-theme="coast"] {
   --theme-bg: #0a1110;
   --theme-sidebar: #0c1513;
+  --theme-sidebar-a: #0f1d19;
+  --theme-sidebar-b: #0a1210;
   --theme-surface: #111b17;
   --theme-surface-2: #152220;
   --theme-surface-3: #1c2c27;
   --theme-line: #23342d;
+  --theme-line-soft: #22342c;
   --theme-text: #f2ede2;
   --theme-muted: #9aa89c;
   --theme-accent: #e2a15c;
   --theme-accent-2: #c8d9a8;
-  --theme-green: #5aa88b;
+  --theme-green: #4a8a71;
+  --theme-green-a: #63b295;
+  --theme-green-b: #4d9a7e;
+  --theme-on-accent: #161a12;
+  --theme-on-green: #071410;
+  --theme-header: #0b1412e6;
+  --theme-input: #0f1a17;
+  --theme-hero-a: #14211d;
+  --theme-hero-b: #0d1714;
+  --theme-card-a: #131e1a;
+  --theme-card-b: #101a16;
+  --theme-budget-a: #0e1a16;
+  --theme-budget-b: #0a1210;
+  --theme-hover: #ffffff0f;
+  --theme-avatar-a: #4f8f77;
+  --theme-avatar-b: #b9773f;
+  --theme-art-1: #2f5747;
+  --theme-art-2: #6a472a;
+  --theme-art-3: #2b4650;
   --theme-soft: #16241f;
   --theme-shadow: #00000066;
   --display-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   color-scheme: dark;
 }
 
-html[data-theme="coast"] ::selection {
-  background: #e2a15c;
-  color: #12160f;
+/* Sunset */
+html[data-theme="sunset"] {
+  --theme-bg: #101817;
+  --theme-sidebar: #0e211d;
+  --theme-sidebar-a: #132a25;
+  --theme-sidebar-b: #0b1614;
+  --theme-surface: #16221e;
+  --theme-surface-2: #1b2a25;
+  --theme-surface-3: #23342d;
+  --theme-line: #2d4239;
+  --theme-line-soft: #2b3f37;
+  --theme-text: #f5efe6;
+  --theme-muted: #a2b0a1;
+  --theme-accent: #e17a59;
+  --theme-accent-2: #e8c08f;
+  --theme-green: #4f8f7a;
+  --theme-green-a: #6aa98c;
+  --theme-green-b: #4b846c;
+  --theme-on-accent: #1a120e;
+  --theme-on-green: #0a1613;
+  --theme-header: #0d1916e6;
+  --theme-input: #14201c;
+  --theme-hero-a: #1b2723;
+  --theme-hero-b: #0f1916;
+  --theme-card-a: #17241f;
+  --theme-card-b: #121d19;
+  --theme-budget-a: #101c18;
+  --theme-budget-b: #0b1412;
+  --theme-hover: #ffffff0d;
+  --theme-avatar-a: #5b9a80;
+  --theme-avatar-b: #c07a4f;
+  --theme-art-1: #335c4c;
+  --theme-art-2: #6d4a2c;
+  --theme-art-3: #2e4b52;
+  --theme-soft: #1d2c27;
+  --theme-shadow: #00000066;
+  --display-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  color-scheme: dark;
+}
+
+/* Terracotta */
+html[data-theme="terracotta"] {
+  --theme-bg: #171411;
+  --theme-sidebar: #211915;
+  --theme-sidebar-a: #2a201b;
+  --theme-sidebar-b: #191310;
+  --theme-surface: #221c18;
+  --theme-surface-2: #2c2420;
+  --theme-surface-3: #372c26;
+  --theme-line: #453429;
+  --theme-line-soft: #43332a;
+  --theme-text: #f6eee8;
+  --theme-muted: #b0a094;
+  --theme-accent: #d9795d;
+  --theme-accent-2: #dfad7a;
+  --theme-green: #7c8a63;
+  --theme-green-a: #909d72;
+  --theme-green-b: #6e7c58;
+  --theme-on-accent: #22150f;
+  --theme-on-green: #161a0f;
+  --theme-header: #1b1410e6;
+  --theme-input: #201916;
+  --theme-hero-a: #2a201b;
+  --theme-hero-b: #1a1411;
+  --theme-card-a: #251d19;
+  --theme-card-b: #1c1613;
+  --theme-budget-a: #1d1714;
+  --theme-budget-b: #151110;
+  --theme-hover: #ffffff0d;
+  --theme-avatar-a: #8a8f63;
+  --theme-avatar-b: #b87a54;
+  --theme-art-1: #4a5a38;
+  --theme-art-2: #6f4a2f;
+  --theme-art-3: #3f4a4a;
+  --theme-soft: #392923;
+  --theme-shadow: #00000066;
+  --display-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  color-scheme: dark;
+}
+
+/* Night train */
+html[data-theme="night"] {
+  --theme-bg: #11191e;
+  --theme-sidebar: #101d23;
+  --theme-sidebar-a: #14232a;
+  --theme-sidebar-b: #0d161b;
+  --theme-surface: #18232a;
+  --theme-surface-2: #1e2b33;
+  --theme-surface-3: #26353d;
+  --theme-line: #2e4049;
+  --theme-line-soft: #2c3d45;
+  --theme-text: #f1f5f2;
+  --theme-muted: #9cadaa;
+  --theme-accent: #e5a76f;
+  --theme-accent-2: #cfd8a6;
+  --theme-green: #558f8b;
+  --theme-green-a: #6fa9a3;
+  --theme-green-b: #4b807c;
+  --theme-on-accent: #141b18;
+  --theme-on-green: #081513;
+  --theme-header: #0f191fe6;
+  --theme-input: #162129;
+  --theme-hero-a: #1b272d;
+  --theme-hero-b: #111a20;
+  --theme-card-a: #19242a;
+  --theme-card-b: #131d23;
+  --theme-budget-a: #121b21;
+  --theme-budget-b: #0d1519;
+  --theme-hover: #ffffff0e;
+  --theme-avatar-a: #5a9490;
+  --theme-avatar-b: #c08a5c;
+  --theme-art-1: #2f565a;
+  --theme-art-2: #6a4a2f;
+  --theme-art-3: #2b4650;
+  --theme-soft: #25393b;
+  --theme-shadow: #00000066;
+  --display-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  color-scheme: dark;
+}
+
+html[data-theme] ::selection {
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
 }
 
 /* A faint map grid plus two glows: one lantern overhead, one cool route light. */
-html[data-theme="coast"] body {
+html[data-theme] body {
   background:
-    radial-gradient(920px 420px at 84% -12%, #e2a15c1f, transparent 60%),
-    radial-gradient(760px 420px at 0% 104%, #5aa88b1a, transparent 62%),
+    radial-gradient(920px 420px at 84% -12%, color-mix(in srgb, var(--theme-accent) 12%, transparent), transparent 60%),
+    radial-gradient(760px 420px at 0% 104%, color-mix(in srgb, var(--theme-green) 10%, transparent), transparent 62%),
     repeating-linear-gradient(0deg, #ffffff06 0 1px, transparent 1px 64px),
     repeating-linear-gradient(90deg, #ffffff06 0 1px, transparent 1px 64px),
     var(--theme-bg) !important;
   color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-app {
+html[data-theme] .wl-app {
   background: transparent;
 }
 
 /* --- Chrome ------------------------------------------------------------ */
-html[data-theme="coast"] .wl-header {
-  background: #0b1412e6 !important;
+html[data-theme] .wl-header {
+  background: var(--theme-header) !important;
   border-bottom: 1px solid var(--theme-line) !important;
   color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-search,
-html[data-theme="coast"] .wl-section-search {
-  background: #0f1a17;
+html[data-theme] .wl-search,
+html[data-theme] .wl-section-search {
+  background: var(--theme-input);
   border: 1px solid var(--theme-line);
   border-radius: 8px;
   color: var(--theme-muted);
 }
 
-html[data-theme="coast"] .wl-search input,
-html[data-theme="coast"] .wl-section-search input {
+html[data-theme] .wl-search input,
+html[data-theme] .wl-section-search input {
   color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-icon-button {
+html[data-theme] .wl-icon-button {
   color: var(--theme-muted);
 }
 
-html[data-theme="coast"] .wl-sidebar {
-  background: linear-gradient(180deg, #0f1d19, #0a1210) !important;
-  border-right: 1px solid #1d2c26 !important;
+html[data-theme] .wl-sidebar {
+  background: linear-gradient(180deg, var(--theme-sidebar-a), var(--theme-sidebar-b)) !important;
+  border-right: 1px solid var(--theme-line) !important;
 }
 
-html[data-theme="coast"] .wl-brand > span:first-child {
-  background: linear-gradient(135deg, #e2a15c, #b97a3f);
-  color: #12160f;
+html[data-theme] .wl-brand > span:first-child {
+  background: linear-gradient(135deg, var(--theme-accent), color-mix(in srgb, var(--theme-accent) 74%, #000));
+  color: var(--theme-on-accent);
   box-shadow: 0 10px 24px #00000080;
 }
 
-html[data-theme="coast"] .wl-nav button {
-  color: #cdd8cdc4;
+html[data-theme] .wl-nav button {
+  color: color-mix(in srgb, var(--theme-text) 78%, transparent);
 }
 
-html[data-theme="coast"] .wl-nav button:hover {
-  background: #ffffff0f;
-  color: #fffaf0;
+html[data-theme] .wl-nav button:hover {
+  background: var(--theme-hover);
+  color: var(--theme-text);
 }
 
 /* Active state: an amber edge marker, like a pin on the map. */
-html[data-theme="coast"] .wl-nav button.active {
-  background: linear-gradient(90deg, #e2a15c26, #e2a15c08) !important;
-  box-shadow: inset 2px 0 0 #e2a15c;
-  color: #fdf6ea !important;
+html[data-theme] .wl-nav button.active {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 15%, transparent), color-mix(in srgb, var(--theme-accent) 3%, transparent)) !important;
+  box-shadow: inset 2px 0 0 var(--theme-accent);
+  color: var(--theme-text) !important;
 }
 
-html[data-theme="coast"] .wl-trip-button {
-  background: #15241f;
-  border-color: #2b3d35;
-  color: #f2ede2;
+html[data-theme] .wl-trip-button {
+  background: var(--theme-surface-2);
+  border-color: var(--theme-line);
+  color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-sidebar-summary {
-  border-top-color: #ffffff1a;
+html[data-theme] .wl-sidebar-summary {
+  border-top-color: var(--theme-line);
 }
 
 /* --- Masthead ---------------------------------------------------------- */
-html[data-theme="coast"] .wl-hero {
+html[data-theme] .wl-hero {
   background:
-    radial-gradient(680px 260px at 88% 2%, #e2a15c26, transparent 62%),
-    linear-gradient(142deg, #14211d, #0d1714) !important;
-  border: 1px solid #26382f !important;
+    radial-gradient(680px 260px at 88% 2%, color-mix(in srgb, var(--theme-accent) 15%, transparent), transparent 62%),
+    linear-gradient(142deg, var(--theme-hero-a), var(--theme-hero-b)) !important;
+  border: 1px solid var(--theme-line) !important;
   box-shadow: 0 26px 60px #00000059 !important;
 }
 
-html[data-theme="coast"] .wl-hero h1 {
+html[data-theme] .wl-hero h1 {
   font-family: var(--display-serif) !important;
   font-size: clamp(34px, 4.4vw, 56px);
   line-height: 1.04;
   letter-spacing: -0.018em;
-  color: #f6f0e4;
+  color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-hero h1 em {
+html[data-theme] .wl-hero h1 em {
   color: var(--theme-accent);
 }
 
-html[data-theme="coast"] .wl-hero p {
-  color: #a7b3a7;
+html[data-theme] .wl-hero p {
+  color: var(--theme-muted);
   font-size: 13px;
   line-height: 1.65;
   max-width: 58ch;
 }
 
-html[data-theme="coast"] .wl-hero-meta span {
-  color: #8e9c90;
+html[data-theme] .wl-hero-meta span {
+  color: color-mix(in srgb, var(--theme-muted) 82%, transparent);
 }
 
-html[data-theme="coast"] .wl-kicker,
-html[data-theme="coast"] .wl-panel-head span,
-html[data-theme="coast"] .wl-subhead span {
+html[data-theme] .wl-kicker,
+html[data-theme] .wl-panel-head span,
+html[data-theme] .wl-subhead span {
   color: var(--theme-accent) !important;
   letter-spacing: 0.18em;
 }
 
 /* Actions read as the one warm light source in a cool room. */
-html[data-theme="coast"] .wl-primary,
-html[data-theme="coast"] .wl-new-trip,
-html[data-theme="coast"] .wl-form-submit,
-html[data-theme="coast"] .wl-share {
-  background: linear-gradient(135deg, #eeb173, #d0874a) !important;
-  color: #161a12 !important;
+html[data-theme] .wl-primary,
+html[data-theme] .wl-new-trip,
+html[data-theme] .wl-form-submit,
+html[data-theme] .wl-share {
+  background: linear-gradient(135deg, var(--theme-accent-2), var(--theme-accent)) !important;
+  color: var(--theme-on-accent) !important;
   border-radius: 7px;
-  box-shadow: 0 10px 24px #e2a15c26;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--theme-accent) 15%, transparent);
 }
 
-html[data-theme="coast"] .wl-hero-actions button {
+html[data-theme] .wl-hero-actions button {
   min-height: 44px;
   border-radius: 7px;
   padding: 0 18px;
-  background: linear-gradient(135deg, #eeb173, #d0874a);
-  color: #161a12;
+  background: linear-gradient(135deg, var(--theme-accent-2), var(--theme-accent));
+  color: var(--theme-on-accent);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-html[data-theme="coast"] .wl-hero-actions button.secondary {
+html[data-theme] .wl-hero-actions button.secondary {
   background: transparent;
-  color: #eae3d5;
-  border: 1px solid #33473d;
+  color: var(--theme-text);
+  border: 1px solid var(--theme-line);
   box-shadow: none;
 }
 
-html[data-theme="coast"] .wl-hero-actions button.secondary:hover {
+html[data-theme] .wl-hero-actions button.secondary:hover {
   background: #ffffff0d;
 }
 
 /* --- Cards ------------------------------------------------------------- */
-html[data-theme="coast"] .wl-panel,
-html[data-theme="coast"] .wl-stat-grid,
-html[data-theme="coast"] .wl-activity-card,
-html[data-theme="coast"] .wl-idea-card,
-html[data-theme="coast"] .wl-place-card,
-html[data-theme="coast"] .wl-route-card,
-html[data-theme="coast"] .wl-tip-card,
-html[data-theme="coast"] .wl-budget-hero,
-html[data-theme="coast"] .wl-note-grid article,
-html[data-theme="coast"] .wl-booking-list article,
-html[data-theme="coast"] .wl-role-guide > div,
-html[data-theme="coast"] .wl-ideas-intro {
-  border: 1px solid #22332c !important;
-  background: linear-gradient(180deg, #131e1a, #101a16) !important;
+html[data-theme] .wl-panel,
+html[data-theme] .wl-stat-grid,
+html[data-theme] .wl-activity-card,
+html[data-theme] .wl-idea-card,
+html[data-theme] .wl-place-card,
+html[data-theme] .wl-route-card,
+html[data-theme] .wl-tip-card,
+html[data-theme] .wl-budget-hero,
+html[data-theme] .wl-note-grid article,
+html[data-theme] .wl-booking-list article,
+html[data-theme] .wl-role-guide > div,
+html[data-theme] .wl-ideas-intro {
+  border: 1px solid var(--theme-line) !important;
+  background: linear-gradient(180deg, var(--theme-card-a), var(--theme-card-b)) !important;
   border-radius: 13px !important;
   box-shadow: 0 16px 36px #0000003d !important;
 }
 
 /* Budget leads the page: the deepest block, with the cash figure as the light. */
-html[data-theme="coast"] .wl-budget-hero {
-  background: radial-gradient(520px 200px at 82% 0%, #e2a15c26, transparent 60%),
-    linear-gradient(140deg, #0e1a16, #0a1210) !important;
-  border-color: #2a3d34 !important;
-  color: #f6f0e4;
+html[data-theme] .wl-budget-hero {
+  background: radial-gradient(520px 200px at 82% 0%, color-mix(in srgb, var(--theme-accent) 15%, transparent), transparent 60%),
+    linear-gradient(140deg, var(--theme-budget-a), var(--theme-budget-b)) !important;
+  border-color: var(--theme-line) !important;
+  color: var(--theme-text);
   box-shadow: 0 24px 54px #0000005c !important;
 }
 
-html[data-theme="coast"] .wl-budget-hero :is(h1, h2, h3, strong, b, p, span, small) {
+html[data-theme] .wl-budget-hero :is(h1, h2, h3, strong, b, p, span, small) {
   color: inherit;
 }
 
-html[data-theme="coast"] .wl-budget-hero small,
-html[data-theme="coast"] .wl-budget-hero p {
-  color: #a4b0a4;
+html[data-theme] .wl-budget-hero small,
+html[data-theme] .wl-budget-hero p {
+  color: var(--theme-muted);
 }
 
-html[data-theme="coast"] .wl-stat span {
-  color: #93a196;
+html[data-theme] .wl-stat span {
+  color: var(--theme-muted);
   letter-spacing: 0.16em;
 }
 
-html[data-theme="coast"] .wl-stat strong {
-  color: #f4eee2;
+html[data-theme] .wl-stat strong {
+  color: var(--theme-text);
   font-variant-numeric: tabular-nums;
 }
 
-html[data-theme="coast"] .wl-stat small {
-  color: #86958a;
+html[data-theme] .wl-stat small {
+  color: color-mix(in srgb, var(--theme-muted) 85%, transparent);
 }
 
-html[data-theme="coast"] .wl-stat svg {
+html[data-theme] .wl-stat svg {
   color: var(--theme-accent) !important;
 }
 
-html[data-theme="coast"] .wl-panel-head h2 {
+html[data-theme] .wl-panel-head h2 {
   font-family: var(--display-serif);
   font-size: 22px;
   letter-spacing: -0.01em;
-  color: #f2ece0;
+  color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-panel-head button {
-  color: #cf8f55;
+html[data-theme] .wl-panel-head button {
+  color: var(--theme-accent);
   font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-html[data-theme="coast"] .wl-page-head h1 {
+html[data-theme] .wl-page-head h1 {
   font-family: var(--display-serif) !important;
   letter-spacing: -0.02em !important;
-  color: #f6f0e4;
+  color: var(--theme-text);
 }
 
-html[data-theme="coast"] .wl-page-head p {
-  color: #98a598;
+html[data-theme] .wl-page-head p {
+  color: var(--theme-muted);
 }
 
 /* --- Rows and small parts --------------------------------------------- */
 /* Dashed rules read as the dotted legs between stops on a route map. */
-html[data-theme="coast"] .wl-next-row {
-  border-top: 1px dashed #22342c;
+html[data-theme] .wl-next-row {
+  border-top: 1px dashed var(--theme-line-soft);
 }
 
-html[data-theme="coast"] .wl-next-row:hover {
-  background: #ffffff08;
+html[data-theme] .wl-next-row:hover {
+  background: var(--theme-hover);
 }
 
-html[data-theme="coast"] .wl-next-row small {
-  color: #8b998d;
+html[data-theme] .wl-next-row small {
+  color: var(--theme-muted);
 }
 
-html[data-theme="coast"] .wl-next-row strong {
-  color: #eee7d9;
+html[data-theme] .wl-next-row strong {
+  color: var(--theme-text);
   font-variant-numeric: tabular-nums;
 }
 
-html[data-theme="coast"] .wl-member-stack span {
-  box-shadow: 0 0 0 2px #111b17;
+html[data-theme] .wl-member-stack span {
+  box-shadow: 0 0 0 2px var(--theme-surface);
 }
 
-html[data-theme="coast"] .wl-status-dot {
-  background: #0f1916;
-  border-color: #2c3f36;
+html[data-theme] .wl-status-dot {
+  background: var(--theme-surface-2);
+  border-color: var(--theme-line);
 }
 
-html[data-theme="coast"] .wl-avatar {
-  border-color: #111b17;
+html[data-theme] .wl-avatar {
+  border-color: var(--theme-surface);
 }
 
-html[data-theme="coast"] .wl-trip-code {
-  color: #161a12;
+html[data-theme] .wl-trip-code {
+  color: var(--theme-on-accent);
 }
 
-html[data-theme="coast"] .wl-day-tabs button {
-  background: #111b17;
-  border-color: #22332c;
+html[data-theme] .wl-day-tabs button {
+  background: var(--theme-surface);
+  border-color: var(--theme-line);
 }
 
-html[data-theme="coast"] .wl-day-tabs button.active {
-  background: linear-gradient(135deg, #63b295, #4d9a7e) !important;
-  border-color: #5aa88b !important;
-  color: #071410 !important;
+html[data-theme] .wl-day-tabs button.active {
+  background: linear-gradient(135deg, var(--theme-green-a), var(--theme-green-b)) !important;
+  border-color: var(--theme-green) !important;
+  color: var(--theme-on-green) !important;
 }
 
-html[data-theme="coast"] .wl-day-tabs button.active small,
-html[data-theme="coast"] .wl-day-tabs button.active span {
-  color: #0b1a14cc;
+html[data-theme] .wl-day-tabs button.active small,
+html[data-theme] .wl-day-tabs button.active span {
+  color: color-mix(in srgb, var(--theme-on-green) 80%, transparent);
 }
 
-html[data-theme="coast"] .wl-weather {
-  color: #ece6da;
+html[data-theme] .wl-weather {
+  color: var(--theme-text);
 }
 
 /* --- Appearance control ------------------------------------------------ */
-html[data-theme="coast"] .theme-toggle {
-  background: #111b17;
-  border-color: #2a3d34;
-  color: #f2ede2;
+html[data-theme] .theme-toggle {
+  background: var(--theme-surface);
+  border-color: var(--theme-line);
+  color: var(--theme-text);
   border-radius: 10px;
   box-shadow: 0 18px 44px #00000073;
 }
 
-html[data-theme="coast"] .theme-toggle-icon {
-  background: linear-gradient(135deg, #e2a15c, #b97a3f);
-  color: #12160f;
+html[data-theme] .theme-toggle-icon {
+  background: linear-gradient(135deg, var(--theme-accent), color-mix(in srgb, var(--theme-accent) 74%, #000));
+  color: var(--theme-on-accent);
 }
 
-html[data-theme="coast"] .theme-panel {
-  background: #0f1a17;
-  border-color: #2a3d34;
-  color: #f2ede2;
+html[data-theme] .theme-panel {
+  background: var(--theme-input);
+  border-color: var(--theme-line);
+  color: var(--theme-text);
 }
 
-html[data-theme="coast"] .theme-panel-head b {
+html[data-theme] .theme-panel-head b {
   font-family: var(--display-serif);
 }
 
-html[data-theme="coast"] .theme-option {
-  border-color: #1e2f28;
+html[data-theme] .theme-option {
+  border-color: var(--theme-line);
 }
 
-html[data-theme="coast"] .theme-option.active {
+html[data-theme] .theme-option.active {
   border-color: var(--theme-accent);
-  background: #16241f;
+  background: var(--theme-surface-2);
 }
 
 /* --- Phones ------------------------------------------------------------ */
 @media (max-width: 700px) {
-  html[data-theme="coast"] .wl-hero h1 {
+  html[data-theme] .wl-hero h1 {
     font-size: clamp(28px, 8vw, 38px);
   }
 
-  html[data-theme="coast"] .wl-hero p {
+  html[data-theme] .wl-hero p {
     font-size: 12px;
   }
 
-  html[data-theme="coast"] .wl-panel-head h2 {
+  html[data-theme] .wl-panel-head h2 {
     font-size: 20px;
   }
 }

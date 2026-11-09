@@ -1,11 +1,7 @@
-/* Wanderline — finishing pass for the Night map theme.
-   Spacing, type scale and a few component refinements on top of
-   night-map-theme.css. Everything is scoped so the other appearances keep
-   their original sizing. Loaded last. */
-
-html[data-theme="coast"] {
-  --theme-green: #4a8a71;
-}
+/* Wanderline — finishing pass for the appearance layer.
+   Spacing, type scale and component refinements on top of
+   night-map-theme.css. It applies to every appearance so all four keep the
+   same layout and proportions. Loaded last. */
 
 /* --- Page rhythm -------------------------------------------------------
    Cards had 20px of padding and 13px corners with 14px gaps, which read
@@ -14,141 +10,141 @@ html[data-theme="coast"] {
    so the page itself needs the gutters or every edge card touches the
    window. Pages that do use .wl-page-inner drop their own side padding to
    avoid doubling it. */
-html[data-theme="coast"] .wl-page {
+html[data-theme] .wl-page {
   padding: 16px clamp(18px, 2.6vw, 40px) 0;
 }
 
-html[data-theme="coast"] .wl-page-inner {
+html[data-theme] .wl-page-inner {
   padding: 26px 0 80px;
   max-width: 1400px;
 }
 
-html[data-theme="coast"] .wl-dashboard-grid {
+html[data-theme] .wl-dashboard-grid {
   gap: 22px;
   margin: 22px 0 92px;
 }
 
-html[data-theme="coast"] .wl-panel {
+html[data-theme] .wl-panel {
   padding: 24px;
   border-radius: 16px !important;
 }
 
-html[data-theme="coast"] .wl-panel-head {
+html[data-theme] .wl-panel-head {
   margin-bottom: 18px;
 }
 
-html[data-theme="coast"] .wl-panel-head h2 {
+html[data-theme] .wl-panel-head h2 {
   font-size: 24px;
   margin-top: 6px;
 }
 
-html[data-theme="coast"] .wl-page-head {
+html[data-theme] .wl-page-head {
   margin-bottom: 30px;
 }
 
-html[data-theme="coast"] .wl-page-head h1 {
+html[data-theme] .wl-page-head h1 {
   font-size: 42px;
   margin: 9px 0 7px;
 }
 
-html[data-theme="coast"] .wl-page-head p {
+html[data-theme] .wl-page-head p {
   font-size: 12.5px;
   line-height: 1.65;
 }
 
 /* --- Masthead ---------------------------------------------------------- */
-html[data-theme="coast"] .wl-hero {
+html[data-theme] .wl-hero {
   padding: 44px clamp(30px, 3.6vw, 60px);
 }
 
-html[data-theme="coast"] .wl-hero h1 {
+html[data-theme] .wl-hero h1 {
   font-size: clamp(38px, 4.6vw, 60px);
 }
 
-html[data-theme="coast"] .wl-hero p {
+html[data-theme] .wl-hero p {
   font-size: 14px;
   margin-top: 12px;
 }
 
-html[data-theme="coast"] .wl-hero-meta {
+html[data-theme] .wl-hero-meta {
   margin-top: 18px;
 }
 
-html[data-theme="coast"] .wl-hero-meta span {
+html[data-theme] .wl-hero-meta span {
   font-size: 11px;
 }
 
-html[data-theme="coast"] .wl-hero-actions {
+html[data-theme] .wl-hero-actions {
   gap: 12px;
 }
 
-html[data-theme="coast"] .wl-hero-actions button {
+html[data-theme] .wl-hero-actions button {
   min-height: 46px;
   padding: 0 20px;
 }
 
 /* --- Chrome ------------------------------------------------------------ */
-html[data-theme="coast"] .wl-header {
+html[data-theme] .wl-header {
   height: 76px;
 }
 
-html[data-theme="coast"] .wl-search-wrap {
+html[data-theme] .wl-search-wrap {
   max-width: 560px;
 }
 
-html[data-theme="coast"] .wl-search {
+html[data-theme] .wl-search {
   height: 44px;
   border-radius: 9px;
 }
 
-html[data-theme="coast"] .wl-search input {
+html[data-theme] .wl-search input {
   font-size: 12px;
 }
 
-html[data-theme="coast"] .wl-nav {
+html[data-theme] .wl-nav {
   gap: 5px;
   margin-top: 20px;
 }
 
-html[data-theme="coast"] .wl-nav button {
+html[data-theme] .wl-nav button {
   min-height: 43px;
   font-size: 11.5px;
   border-radius: 10px;
   padding: 0 12px;
 }
 
-html[data-theme="coast"] .wl-brand {
+html[data-theme] .wl-brand {
   font-size: 19px;
 }
 
-html[data-theme="coast"] .wl-sidebar-summary span {
+html[data-theme] .wl-sidebar-summary span {
   font-size: 10px;
 }
 
 /* --- Stat band --------------------------------------------------------- */
-html[data-theme="coast"] .wl-stat-grid {
+html[data-theme] .wl-stat-grid {
   margin-top: 22px;
   border-radius: 16px !important;
 }
 
-html[data-theme="coast"] .wl-stat {
+html[data-theme] .wl-stat {
   padding: 19px 22px 32px;
 }
 
-html[data-theme="coast"] .wl-stat span {
+html[data-theme] .wl-stat span {
   font-size: 9.5px;
 }
 
-html[data-theme="coast"] .wl-stat strong {
+html[data-theme] .wl-stat strong {
   font-size: clamp(27px, 2.5vw, 33px);
   margin-top: 4px;
 }
 
-html[data-theme="coast"] .wl-stat small {
+html[data-theme] .wl-stat small {
   font-size: 10.5px;
 }
 
-html[data-theme="coast"] .wl-stat::after {
+html[data-theme] .wl-stat::after {
   left: 22px;
   right: 22px;
   bottom: 17px;
@@ -157,63 +153,63 @@ html[data-theme="coast"] .wl-stat::after {
 /* --- Overview rows -----------------------------------------------------
    Inset the dashed rule so it sits inside the card instead of running
    border to border, and give each stop room to breathe. */
-html[data-theme="coast"] .wl-next-row {
+html[data-theme] .wl-next-row {
   border-top: 0 !important;
   position: relative;
   padding: 16px 2px;
 }
 
-html[data-theme="coast"] .wl-next-row::before {
+html[data-theme] .wl-next-row::before {
   content: "";
   position: absolute;
   top: 0;
   left: 4px;
   right: 4px;
-  border-top: 1px dashed #22342c;
+  border-top: 1px dashed var(--theme-line-soft);
 }
 
-html[data-theme="coast"] .wl-next-row b {
+html[data-theme] .wl-next-row b {
   font-size: 12.5px;
 }
 
-html[data-theme="coast"] .wl-next-row small {
+html[data-theme] .wl-next-row small {
   font-size: 9.5px;
   margin-top: 3px;
 }
 
-html[data-theme="coast"] .wl-next-row strong {
+html[data-theme] .wl-next-row strong {
   font-size: 12px;
 }
 
-html[data-theme="coast"] .wl-category {
+html[data-theme] .wl-category {
   border-radius: 11px;
 }
 
 /* --- Itinerary --------------------------------------------------------- */
-html[data-theme="coast"] .wl-day-tabs {
+html[data-theme] .wl-day-tabs {
   gap: 10px;
   margin-bottom: 24px;
 }
 
-html[data-theme="coast"] .wl-day-tabs button {
+html[data-theme] .wl-day-tabs button {
   min-height: 68px;
   padding: 12px 16px;
   border-radius: 12px;
 }
 
-html[data-theme="coast"] .wl-day-tabs button.active {
-  background: linear-gradient(135deg, #4f8f77, #3c6f5c) !important;
-  border-color: #4f8f77 !important;
-  color: #f4f9f2 !important;
+html[data-theme] .wl-day-tabs button.active {
+  background: linear-gradient(135deg, var(--theme-green-a), var(--theme-green-b)) !important;
+  border-color: var(--theme-green-a) !important;
+  color: var(--theme-on-green) !important;
 }
 
-html[data-theme="coast"] .wl-day-tabs button.active small,
-html[data-theme="coast"] .wl-day-tabs button.active span {
-  color: #e6f2ea;
+html[data-theme] .wl-day-tabs button.active small,
+html[data-theme] .wl-day-tabs button.active span {
+  color: var(--theme-on-green);
   font-size: 9px;
 }
 
-html[data-theme="coast"] .wl-status {
+html[data-theme] .wl-status {
   font-size: 8.5px;
   padding: 3px 8px;
   border-radius: 999px;
@@ -221,278 +217,278 @@ html[data-theme="coast"] .wl-status {
   text-transform: uppercase;
 }
 
-html[data-theme="coast"] .wl-activity-card {
+html[data-theme] .wl-activity-card {
   padding: 18px 20px;
   border-radius: 15px !important;
 }
 
-html[data-theme="coast"] .wl-activity-title h3 {
+html[data-theme] .wl-activity-title h3 {
   font-size: 21px;
   margin: 6px 0 4px;
 }
 
-html[data-theme="coast"] .wl-activity-title > div > small {
+html[data-theme] .wl-activity-title > div > small {
   font-size: 9px;
 }
 
-html[data-theme="coast"] .wl-activity-title .wl-location {
+html[data-theme] .wl-activity-title .wl-location {
   font-size: 10px;
 }
 
-html[data-theme="coast"] .wl-activity-foot {
+html[data-theme] .wl-activity-foot {
   font-size: 10px;
   gap: 10px 16px;
   margin-top: 12px;
 }
 
-html[data-theme="coast"] .wl-activity-foot button {
+html[data-theme] .wl-activity-foot button {
   font-size: 10px;
 }
 
-html[data-theme="coast"] .wl-time b {
+html[data-theme] .wl-time b {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 
-html[data-theme="coast"] .wl-status-dot {
+html[data-theme] .wl-status-dot {
   width: 24px;
   height: 24px;
 }
 
 /* --- Aside cards ------------------------------------------------------- */
-html[data-theme="coast"] .wl-route-card,
-html[data-theme="coast"] .wl-day-team,
-html[data-theme="coast"] .wl-tip-card {
+html[data-theme] .wl-route-card,
+html[data-theme] .wl-day-team,
+html[data-theme] .wl-tip-card {
   padding: 18px;
   border-radius: 15px;
 }
 
-html[data-theme="coast"] .wl-route-card h3,
-html[data-theme="coast"] .wl-day-team h3,
-html[data-theme="coast"] .wl-tip-card h3 {
+html[data-theme] .wl-route-card h3,
+html[data-theme] .wl-day-team h3,
+html[data-theme] .wl-tip-card h3 {
   font-family: var(--display-serif);
   font-size: 18px;
   margin: 13px 0 6px;
 }
 
-html[data-theme="coast"] .wl-route-card p,
-html[data-theme="coast"] .wl-day-team p,
-html[data-theme="coast"] .wl-tip-card p {
+html[data-theme] .wl-route-card p,
+html[data-theme] .wl-day-team p,
+html[data-theme] .wl-tip-card p {
   font-size: 10px;
   line-height: 1.6;
 }
 
-html[data-theme="coast"] .wl-route-card button {
+html[data-theme] .wl-route-card button {
   min-height: 40px;
   font-size: 10px;
-  background: #3c6f5c !important;
-  color: #f2f7ef !important;
-  border-color: #47826b !important;
+  background: var(--theme-green-b) !important;
+  color: var(--theme-on-green) !important;
+  border-color: var(--theme-green-a) !important;
 }
 
-html[data-theme="coast"] .wl-route-art {
+html[data-theme] .wl-route-art {
   border-radius: 11px;
 }
 
 /* --- Ideas ------------------------------------------------------------- */
-html[data-theme="coast"] .wl-ideas-intro {
+html[data-theme] .wl-ideas-intro {
   padding: 22px 26px;
   border-radius: 16px !important;
 }
 
-html[data-theme="coast"] .wl-ideas-intro h3,
-html[data-theme="coast"] .wl-ideas-intro b {
+html[data-theme] .wl-ideas-intro h3,
+html[data-theme] .wl-ideas-intro b {
   font-size: 22px;
 }
 
-html[data-theme="coast"] .wl-ideas-intro p {
+html[data-theme] .wl-ideas-intro p {
   font-size: 10.5px;
   line-height: 1.6;
 }
 
-html[data-theme="coast"] .wl-idea-card {
+html[data-theme] .wl-idea-card {
   padding: 22px;
   border-radius: 15px !important;
 }
 
-html[data-theme="coast"] .wl-idea-card h3 {
+html[data-theme] .wl-idea-card h3 {
   font-size: 21px;
 }
 
-html[data-theme="coast"] .wl-idea-meta,
-html[data-theme="coast"] .wl-idea-card p {
+html[data-theme] .wl-idea-meta,
+html[data-theme] .wl-idea-card p {
   font-size: 10px;
 }
 
-html[data-theme="coast"] .wl-idea-actions {
+html[data-theme] .wl-idea-actions {
   gap: 9px;
   margin-top: 16px;
 }
 
-html[data-theme="coast"] .wl-idea-actions button {
+html[data-theme] .wl-idea-actions button {
   min-height: 38px;
   font-size: 9.5px;
   border-radius: 8px;
   letter-spacing: 0.02em;
 }
 
-html[data-theme="coast"] .wl-idea-actions button.primary {
-  background: #3c6f5c !important;
-  border-color: #47826b !important;
-  color: #f2f7ef !important;
+html[data-theme] .wl-idea-actions button.primary {
+  background: var(--theme-green-b) !important;
+  border-color: var(--theme-green-a) !important;
+  color: var(--theme-on-green) !important;
 }
 
 /* --- Saved places ------------------------------------------------------
    Every card shared one flat gradient, which read as unfinished. Give the
    art a contour pattern and rotate three tint families. */
-html[data-theme="coast"] .wl-place-art {
+html[data-theme] .wl-place-art {
   height: 150px;
   padding: 16px;
-  border-bottom: 1px solid #1f302a;
+  border-bottom: 1px solid var(--theme-line);
   border-radius: 15px 15px 0 0;
   background:
     repeating-radial-gradient(circle at 24% 18%, #ffffff09 0 1px, transparent 1px 14px),
-    radial-gradient(120% 110% at 18% 0%, #2f5747, transparent 62%),
-    linear-gradient(140deg, #16261f, #0d1713) !important;
+    radial-gradient(120% 110% at 18% 0%, var(--theme-art-1), transparent 62%),
+    linear-gradient(140deg, var(--theme-card-a), var(--theme-card-b)) !important;
 }
 
-html[data-theme="coast"] .wl-place-card:nth-child(3n + 2) .wl-place-art {
+html[data-theme] .wl-place-card:nth-child(3n + 2) .wl-place-art {
   background:
     repeating-radial-gradient(circle at 76% 14%, #ffffff09 0 1px, transparent 1px 14px),
-    radial-gradient(120% 110% at 82% 0%, #6a472a, transparent 60%),
-    linear-gradient(140deg, #1f2118, #0d1713) !important;
+    radial-gradient(120% 110% at 82% 0%, var(--theme-art-2), transparent 60%),
+    linear-gradient(140deg, var(--theme-card-a), var(--theme-card-b)) !important;
 }
 
-html[data-theme="coast"] .wl-place-card:nth-child(3n) .wl-place-art {
+html[data-theme] .wl-place-card:nth-child(3n) .wl-place-art {
   background:
     repeating-radial-gradient(circle at 40% 80%, #ffffff09 0 1px, transparent 1px 14px),
-    radial-gradient(120% 110% at 50% 100%, #2b4650, transparent 62%),
-    linear-gradient(140deg, #141f22, #0d1713) !important;
+    radial-gradient(120% 110% at 50% 100%, var(--theme-art-3), transparent 62%),
+    linear-gradient(140deg, var(--theme-card-a), var(--theme-card-b)) !important;
 }
 
-html[data-theme="coast"] .wl-place-art > svg {
+html[data-theme] .wl-place-art > svg {
   width: 22px;
   height: 22px;
-  color: #d9d2c2;
+  color: var(--theme-text);
   opacity: 0.9;
 }
 
-html[data-theme="coast"] .wl-place-art span {
+html[data-theme] .wl-place-art span {
   padding: 5px 9px;
   border-radius: 999px;
-  background: #0a1311cc;
-  border: 1px solid #ffffff17;
-  color: #e6dfd1;
+  background: color-mix(in srgb, var(--theme-bg) 80%, transparent);
+  border: 1px solid var(--theme-line);
+  color: var(--theme-text);
   font-size: 8px;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-html[data-theme="coast"] .wl-place-body {
+html[data-theme] .wl-place-body {
   padding: 18px 18px 16px;
 }
 
-html[data-theme="coast"] .wl-place-card {
+html[data-theme] .wl-place-card {
   border-radius: 15px !important;
 }
 
-html[data-theme="coast"] .wl-place-card h3 {
+html[data-theme] .wl-place-card h3 {
   font-size: 20px;
 }
 
-html[data-theme="coast"] .wl-place-card p {
+html[data-theme] .wl-place-card p {
   font-size: 10.5px;
   line-height: 1.6;
 }
 
-html[data-theme="coast"] .wl-place-actions {
+html[data-theme] .wl-place-actions {
   gap: 8px;
   margin-top: 14px;
 }
 
-html[data-theme="coast"] .wl-place-actions button {
+html[data-theme] .wl-place-actions button {
   min-height: 34px;
   font-size: 9px;
   border-radius: 8px;
 }
 
 /* --- People ------------------------------------------------------------ */
-html[data-theme="coast"] .wl-avatar {
-  background: linear-gradient(135deg, #4f8f77, #b9773f);
-  color: #f7f2e6;
-  border-color: #15201c;
+html[data-theme] .wl-avatar {
+  background: linear-gradient(135deg, var(--theme-avatar-a), var(--theme-avatar-b));
+  color: var(--theme-text);
+  border-color: var(--theme-surface);
 }
 
-html[data-theme="coast"] .wl-member-stack {
+html[data-theme] .wl-member-stack {
   gap: 12px;
 }
 
-html[data-theme="coast"] .wl-member-stack b {
+html[data-theme] .wl-member-stack b {
   font-size: 11.5px;
 }
 
-html[data-theme="coast"] .wl-member-stack small {
+html[data-theme] .wl-member-stack small {
   font-size: 9.5px;
 }
 
-html[data-theme="coast"] .wl-panel-note {
+html[data-theme] .wl-panel-note {
   font-size: 10px;
 }
 
 /* --- Phones ------------------------------------------------------------ */
 @media (max-width: 700px) {
-  html[data-theme="coast"] .wl-page {
+  html[data-theme] .wl-page {
     padding: 10px 14px 0;
   }
 
-  html[data-theme="coast"] .wl-page-inner {
+  html[data-theme] .wl-page-inner {
     padding: 18px 0 76px;
   }
 
-  html[data-theme="coast"] .wl-dashboard-grid {
+  html[data-theme] .wl-dashboard-grid {
     gap: 14px;
     margin: 14px 0 86px;
   }
 
-  html[data-theme="coast"] .wl-panel {
+  html[data-theme] .wl-panel {
     padding: 18px;
   }
 
-  html[data-theme="coast"] .wl-hero {
+  html[data-theme] .wl-hero {
     padding: 28px 20px;
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
   }
 
-  html[data-theme="coast"] .wl-hero h1 {
+  html[data-theme] .wl-hero h1 {
     font-size: 34px;
   }
 
-  html[data-theme="coast"] .wl-hero-actions {
+  html[data-theme] .wl-hero-actions {
     width: 100%;
     grid-template-columns: 1fr 1fr;
   }
 
-  html[data-theme="coast"] .wl-stat-grid {
+  html[data-theme] .wl-stat-grid {
     margin-top: 14px;
   }
 
-  html[data-theme="coast"] .wl-page-head h1 {
+  html[data-theme] .wl-page-head h1 {
     font-size: 32px;
   }
 
-  html[data-theme="coast"] .wl-stat {
+  html[data-theme] .wl-stat {
     padding: 15px 16px 28px;
   }
 
-  html[data-theme="coast"] .wl-stat::after {
+  html[data-theme] .wl-stat::after {
     left: 16px;
     right: 16px;
     bottom: 14px;
   }
 
-  html[data-theme="coast"] .wl-place-art {
+  html[data-theme] .wl-place-art {
     height: 128px;
   }
 }
