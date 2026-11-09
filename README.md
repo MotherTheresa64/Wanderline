@@ -4,6 +4,10 @@
 
 **Live demo:** https://wanderline-s1yv.onrender.com
 
+![Wanderline trip overview in the Night map theme](docs/screenshots/overview.webp)
+
+*The default **Night map** appearance: one trip's workspace, from the next three stops to who still owes what.*
+
 ## What works today
 
 ### Trips and collaboration
@@ -77,7 +81,7 @@
 - Destination-aware current weather using the keyless Open-Meteo geocoding + forecast APIs
 - Native Web Share with clipboard fallback
 - Google Maps universal search/directions links — no Google Maps API key or billing setup required for current map actions
-- Four persisted themes: **Sunset, Coast, Terracotta, and Night train**
+- Four persisted dark appearances — **Night map** (default), **Sunset**, **Terracotta**, and **Night train** — with a live appearance picker and matching browser chrome
 - Browser theme-color follows the selected appearance
 - Branded runtime recovery and one-click sample-workspace reset
 
@@ -91,7 +95,29 @@
 - Local workspace persistence with defensive recovery when browser storage is malformed or unavailable
 - Express production host with health/config endpoints, secure headers, API 404 handling, caching policy, and SPA fallback
 - GitHub Actions runs `npm run check` plus the compiled-server smoke test
-- Render tracks `main` with Auto-Deploy
+- Render builds and serves `main` through the `render.yaml` blueprint
+
+## Design notes
+
+Wanderline is used at night, on a couch, while comparing train times and splitting a hotel bill — so it deliberately does not look like a light travel brochure. The default **Night map** appearance is built around that moment: deep map-ink surfaces with a faint 64px grid, lantern amber reserved for actions and attention, sage for confirmed plans, routes and progress, and ivory serif headings for the parts that should read like a printed guide.
+
+The system is more than a palette swap. Four dark appearances share one token set, every surface is a real card with its own inset rules, money and times use tabular numerals, and the compact data type is paired with generous card padding so dense planning screens still breathe. Saved places get rotating artwork tints and a contour pattern instead of one repeated gradient block.
+
+- Full rationale, tokens and component rules: [`docs/DESIGN.md`](docs/DESIGN.md)
+- The appearance stack is layered and scoped (`night-map-theme.css`, `refinement.css`, `polish.css`) so the other three appearances keep their own character
+- The appearance picker is a real dialog: keyboard dismissal, `aria-pressed` state, persisted choice, and per-theme `theme-color` / `color-scheme`
+
+## Scope and next steps
+
+The demo is deliberately credential-free: it runs on a typed, versioned local-first workspace, so a reviewer can click through every role, vote, split, and booking without signing up. The cloud boundary is modeled and documented but not wired — Firebase Auth and Firestore replace the storage adapter once configured, with security rules enforcing membership and owner-only operations.
+
+Three things I would do next, in order:
+
+1. **Cloud collaboration**: finish the Firebase Auth + Firestore adapter behind the existing seam, with rules tests for membership, roles, and owner-only deletes.
+2. **Browser-level tests**: promote the manual QA matrix in [`docs/QA.md`](docs/QA.md) into automated flows for expense splitting, role permissions, and the 390px layout.
+3. **Localization and currency**: the domain is USD-first on purpose; multi-currency would store exchange snapshots rather than convert live.
+
+Known tradeoffs: maps open in Google Maps instead of embedding a keyed map (no API billing or key exposure in a reviewable demo); weather is best-effort and never blocks the workspace; and because persistence is local, the sidebar can restore the sample trip at any time.
 
 ## Stack
 
@@ -175,14 +201,15 @@ This keeps the recruiter-facing demo immediately usable without quotas, billing 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — collaborative domain, local/cloud boundary, roles, expense splitting, maps/weather, and deployment shape
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — local/Render/Firebase deployment runbook
 - [`docs/QA.md`](docs/QA.md) — functional, collaboration, mobile, map, budget, theme, and production acceptance checks
+- [`docs/DESIGN.md`](docs/DESIGN.md) — Night map rationale, tokens, component rules, responsive and accessibility notes
 - [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md) — current source ownership map
 
 ## Deployment
 
-The production Render service tracks `main` with Auto-Deploy enabled:
+The production Render service is deployed from `main` through the blueprint:
 
 ```text
-GitHub main → npm install → npm run check → Express host → /api/health → live
+Manual deploy from main → npm install → npm run check → Express host → /api/health → live
 ```
 
 GitHub Actions additionally runs the compiled-server smoke test before a commit is considered clean.
