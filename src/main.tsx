@@ -9,6 +9,7 @@ import './accessibility.css';
 import './showcase-design.css';
 import './refinement.css';
 import './night-map-theme.css';
+import './polish.css';
 
 initializeThemes();
 
