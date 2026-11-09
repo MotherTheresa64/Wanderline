@@ -1,0 +1,342 @@
+/* Wanderline — "Daylight" theme.
+   A warm paper workspace with pine ink and terracotta accents, replacing the
+   dark ocean look. Scoped to the default theme id so the other appearance
+   options keep working exactly as before. Loaded after every other stylesheet,
+   so these rules are the final say for this theme. */
+
+html[data-theme="coast"] {
+  --theme-bg: #f4ede2;
+  --theme-sidebar: #16231d;
+  --theme-surface: #fffaf1;
+  --theme-surface-2: #f9f1e4;
+  --theme-surface-3: #ead9c6;
+  --theme-line: #e0d2bd;
+  --theme-text: #231f1a;
+  --theme-muted: #776a5b;
+  --theme-accent: #bf5130;
+  --theme-accent-2: #d3924a;
+  --theme-green: #2c6650;
+  --theme-soft: #f0e3d0;
+  --theme-shadow: #3d2a1814;
+  --display-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  color-scheme: light;
+}
+
+html[data-theme="coast"] body {
+  background:
+    radial-gradient(1100px 480px at 82% -16%, #f8dcc0 0%, transparent 60%),
+    radial-gradient(820px 420px at 2% 106%, #e7e1d0 0%, transparent 62%),
+    var(--theme-bg) !important;
+  color: var(--theme-text);
+}
+
+html[data-theme="coast"] .wl-app {
+  background: transparent;
+}
+
+/* --- Chrome ------------------------------------------------------------ */
+html[data-theme="coast"] .wl-header {
+  background: #fbf5ebf2 !important;
+  border-bottom: 1px solid var(--theme-line) !important;
+  color: var(--theme-text);
+}
+
+html[data-theme="coast"] .wl-search,
+html[data-theme="coast"] .wl-section-search {
+  background: #fffdf8;
+  border: 1px solid var(--theme-line);
+  border-radius: 8px;
+  color: var(--theme-muted);
+}
+
+html[data-theme="coast"] .wl-search input,
+html[data-theme="coast"] .wl-section-search input {
+  color: var(--theme-text);
+}
+
+html[data-theme="coast"] .wl-icon-button {
+  color: var(--theme-muted);
+}
+
+html[data-theme="coast"] .wl-sidebar {
+  background: linear-gradient(180deg, #1a2a23, #101a15) !important;
+  border-right: 1px solid #26382e !important;
+}
+
+html[data-theme="coast"] .wl-brand > span:first-child {
+  background: linear-gradient(135deg, #c2542f, #dd9a4e);
+  color: #fff6ea;
+  box-shadow: 0 10px 24px #00000059;
+}
+
+html[data-theme="coast"] .wl-nav button {
+  color: #d9e2d9c4;
+}
+
+html[data-theme="coast"] .wl-nav button:hover {
+  background: #ffffff12;
+  color: #fff;
+}
+
+html[data-theme="coast"] .wl-nav button.active {
+  background: linear-gradient(90deg, #c2542f, #9e4429) !important;
+  color: #fff8ef !important;
+}
+
+html[data-theme="coast"] .wl-trip-button {
+  background: #1f3129;
+  border-color: #35493d;
+  color: #f7f0e4;
+}
+
+html[data-theme="coast"] .wl-sidebar-summary {
+  border-top-color: #ffffff1f;
+}
+
+/* --- Masthead ---------------------------------------------------------- */
+html[data-theme="coast"] .wl-hero {
+  background:
+    radial-gradient(680px 240px at 88% 4%, #f3c8a5 0%, transparent 62%),
+    linear-gradient(142deg, #fffaf1, #f6ecdd) !important;
+  border: 1px solid #e6d6bf !important;
+  box-shadow: 0 24px 60px #4a35200c !important;
+}
+
+html[data-theme="coast"] .wl-hero h1 {
+  font-family: var(--display-serif) !important;
+  font-size: clamp(34px, 4.4vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.018em;
+  color: #1d1914;
+}
+
+html[data-theme="coast"] .wl-hero h1 em {
+  color: var(--theme-accent);
+}
+
+html[data-theme="coast"] .wl-hero p {
+  color: #5d5347;
+  font-size: 13px;
+  line-height: 1.65;
+  max-width: 58ch;
+}
+
+html[data-theme="coast"] .wl-hero-meta span {
+  color: #6c6155;
+}
+
+html[data-theme="coast"] .wl-kicker,
+html[data-theme="coast"] .wl-panel-head span,
+html[data-theme="coast"] .wl-subhead span {
+  color: var(--theme-accent) !important;
+  letter-spacing: 0.18em;
+}
+
+html[data-theme="coast"] .wl-primary,
+html[data-theme="coast"] .wl-new-trip,
+html[data-theme="coast"] .wl-form-submit,
+html[data-theme="coast"] .wl-share {
+  background: var(--theme-accent) !important;
+  color: #fff8ee !important;
+  border-radius: 7px;
+  box-shadow: 0 10px 24px #bf513026;
+}
+
+html[data-theme="coast"] .wl-hero-actions button {
+  min-height: 44px;
+  border-radius: 7px;
+  padding: 0 18px;
+  background: var(--theme-accent);
+  color: #fff8ee;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+html[data-theme="coast"] .wl-hero-actions button.secondary {
+  background: transparent;
+  color: #2b251e;
+  border: 1px solid #cfbda4;
+  box-shadow: none;
+}
+
+html[data-theme="coast"] .wl-hero-actions button.secondary:hover {
+  background: #ffffffb3;
+}
+
+/* --- Cards ------------------------------------------------------------- */
+html[data-theme="coast"] .wl-panel,
+html[data-theme="coast"] .wl-stat-grid,
+html[data-theme="coast"] .wl-activity-card,
+html[data-theme="coast"] .wl-idea-card,
+html[data-theme="coast"] .wl-place-card,
+html[data-theme="coast"] .wl-route-card,
+html[data-theme="coast"] .wl-tip-card,
+html[data-theme="coast"] .wl-budget-hero,
+html[data-theme="coast"] .wl-note-grid article,
+html[data-theme="coast"] .wl-booking-list article,
+html[data-theme="coast"] .wl-role-guide > div,
+html[data-theme="coast"] .wl-ideas-intro {
+  border: 1px solid #e3d5c0 !important;
+  background: #fffdf8 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 30px #4a35200a !important;
+}
+
+/* The one deliberate dark block keeps the page from feeling uniformly pale. */
+html[data-theme="coast"] .wl-budget-hero {
+  background: linear-gradient(140deg, #1c2d25, #14211b) !important;
+  border-color: #2b3d33 !important;
+  color: #f6f0e4;
+  box-shadow: 0 22px 50px #1b2b2326 !important;
+}
+
+html[data-theme="coast"] .wl-budget-hero :is(h1, h2, h3, strong, b, p, span, small) {
+  color: inherit;
+}
+
+html[data-theme="coast"] .wl-budget-hero small,
+html[data-theme="coast"] .wl-budget-hero p {
+  color: #c9d2c8;
+}
+
+html[data-theme="coast"] .wl-stat span {
+  color: #8a7a68;
+  letter-spacing: 0.16em;
+}
+
+html[data-theme="coast"] .wl-stat strong {
+  color: #1c1814;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="coast"] .wl-stat small {
+  color: #7b6d5d;
+}
+
+html[data-theme="coast"] .wl-stat svg {
+  color: var(--theme-accent) !important;
+}
+
+html[data-theme="coast"] .wl-panel-head h2 {
+  font-family: var(--display-serif);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: #1f1b16;
+}
+
+html[data-theme="coast"] .wl-panel-head button {
+  color: #9c4a2c;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+html[data-theme="coast"] .wl-page-head h1 {
+  font-family: var(--display-serif) !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* --- Rows and small parts --------------------------------------------- */
+html[data-theme="coast"] .wl-next-row {
+  border-top: 1px solid #ece0cf;
+}
+
+html[data-theme="coast"] .wl-next-row:hover {
+  background: #f7eddd;
+}
+
+html[data-theme="coast"] .wl-next-row small {
+  color: #8a7a68;
+}
+
+html[data-theme="coast"] .wl-next-row strong {
+  color: #2a241d;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="coast"] .wl-member-stack span {
+  box-shadow: 0 0 0 2px #fffdf8;
+}
+
+html[data-theme="coast"] .wl-status-dot {
+  background: #fffdf8;
+  border-color: #d8c7af;
+}
+
+html[data-theme="coast"] .wl-avatar {
+  border-color: #fffdf8;
+}
+
+html[data-theme="coast"] .wl-trip-code {
+  color: #fff8ee;
+}
+
+html[data-theme="coast"] .wl-day-tabs button {
+  background: #fffdf8;
+  border-color: #e3d5c0;
+}
+
+html[data-theme="coast"] .wl-day-tabs button.active {
+  background: var(--theme-green) !important;
+  border-color: var(--theme-green) !important;
+  color: #f5fff8 !important;
+}
+
+html[data-theme="coast"] .wl-day-tabs button.active small,
+html[data-theme="coast"] .wl-day-tabs button.active span {
+  color: #ffffffc9;
+}
+
+html[data-theme="coast"] .wl-weather {
+  color: #2b251f;
+}
+
+/* --- Appearance control ------------------------------------------------ */
+html[data-theme="coast"] .theme-toggle {
+  background: #fffaf1;
+  border-color: #e3d5c0;
+  color: #231f1a;
+  border-radius: 10px;
+  box-shadow: 0 18px 44px #4a35201a;
+}
+
+html[data-theme="coast"] .theme-toggle-icon {
+  background: linear-gradient(135deg, #c2542f, #dd9a4e);
+  color: #fff8ee;
+}
+
+html[data-theme="coast"] .theme-panel {
+  background: #fffaf1;
+  border-color: #e3d5c0;
+  color: #231f1a;
+}
+
+html[data-theme="coast"] .theme-panel-head b {
+  font-family: var(--display-serif);
+}
+
+html[data-theme="coast"] .theme-option {
+  border-color: #ece0cf;
+}
+
+html[data-theme="coast"] .theme-option.active {
+  border-color: var(--theme-accent);
+  background: #f7eddd;
+}
+
+/* --- Phones ------------------------------------------------------------ */
+@media (max-width: 700px) {
+  html[data-theme="coast"] .wl-hero h1 {
+    font-size: clamp(28px, 8vw, 38px);
+  }
+
+  html[data-theme="coast"] .wl-hero p {
+    font-size: 12px;
+  }
+
+  html[data-theme="coast"] .wl-panel-head h2 {
+    font-size: 20px;
+  }
+}
