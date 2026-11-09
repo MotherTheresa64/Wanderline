@@ -4,9 +4,9 @@
 
 **Live demo:** https://wanderline-s1yv.onrender.com
 
-![Wanderline trip overview in the Night map theme](docs/screenshots/overview.webp)
+![Wanderline in the Night map theme: day tabs, a confirmed walk, a planned market visit, and a shared budget bar](docs/cover.svg)
 
-*The default **Night map** appearance: one trip's workspace, from the next three stops to who still owes what.*
+*The default **Night map** appearance: map-ink surfaces, amber for actions, sage for confirmed plans. The [design notes](docs/DESIGN.md) explain the system.*
 
 ## What works today
 
