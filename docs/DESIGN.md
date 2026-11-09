@@ -19,7 +19,7 @@ The result should read as "a workspace someone uses", not "a template someone fi
 
 ## Tokens
 
-Defined once in [`src/night-map-theme.css`](../src/night-map-theme.css) on `html[data-theme]`:
+Defined per appearance in [`src/night-map-theme.css`](../src/night-map-theme.css); these are the Night map values:
 
 | Token | Value | Used for |
 | --- | --- | --- |
