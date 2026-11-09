@@ -4,7 +4,7 @@ type ThemeOption={id:ThemeId;label:string;description:string;colors:[string,stri
 const STORAGE_KEY='wanderline-theme-v2';
 const DEFAULT_THEME:ThemeId='coast';
 const themes:ThemeOption[]=[
-  {id:'coast',label:'Daylight',description:'Paper, pine ink and terracotta',colors:['#f4ede2','#bf5130'],browserColor:'#f4ede2',scheme:'light'},
+  {id:'coast',label:'Night map',description:'Deep map ink with lantern amber and sage routes',colors:['#0a1110','#e2a15c'],browserColor:'#0a1110',scheme:'dark'},
   {id:'sunset',label:'Sunset',description:'Dark Mediterranean green with coral warmth',colors:['#101817','#e17a59'],browserColor:'#101817',scheme:'dark'},
   {id:'terracotta',label:'Terracotta',description:'Dark clay and olive with warm copper accents',colors:['#171411','#d9795d'],browserColor:'#171411',scheme:'dark'},
   {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#11191e','#e5a76f'],browserColor:'#11191e',scheme:'dark'}
