@@ -1,12 +1,13 @@
 type ThemeId='sunset'|'coast'|'terracotta'|'night';
-type ThemeOption={id:ThemeId;label:string;description:string;colors:[string,string];browserColor:string};
+type ThemeScheme='light'|'dark';
+type ThemeOption={id:ThemeId;label:string;description:string;colors:[string,string];browserColor:string;scheme:ThemeScheme};
 const STORAGE_KEY='wanderline-theme-v2';
 const DEFAULT_THEME:ThemeId='coast';
 const themes:ThemeOption[]=[
-  {id:'sunset',label:'Sunset',description:'Dark Mediterranean green with coral warmth',colors:['#101817','#e17a59'],browserColor:'#101817'},
-  {id:'coast',label:'Wanderline',description:'Deep ocean ink with signature route teal',colors:['#030812','#35dec8'],browserColor:'#030812'},
-  {id:'terracotta',label:'Terracotta',description:'Dark clay and olive with warm copper accents',colors:['#171411','#d9795d'],browserColor:'#171411'},
-  {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#11191e','#e5a76f'],browserColor:'#11191e'}
+  {id:'coast',label:'Daylight',description:'Paper, pine ink and terracotta',colors:['#f4ede2','#bf5130'],browserColor:'#f4ede2',scheme:'light'},
+  {id:'sunset',label:'Sunset',description:'Dark Mediterranean green with coral warmth',colors:['#101817','#e17a59'],browserColor:'#101817',scheme:'dark'},
+  {id:'terracotta',label:'Terracotta',description:'Dark clay and olive with warm copper accents',colors:['#171411','#d9795d'],browserColor:'#171411',scheme:'dark'},
+  {id:'night',label:'Night train',description:'Ink blue with warm station light',colors:['#11191e','#e5a76f'],browserColor:'#11191e',scheme:'dark'}
 ];
 function isTheme(value:string|null):value is ThemeId{return themes.some(theme=>theme.id===value)}
 function readTheme():ThemeId{try{const saved=localStorage.getItem(STORAGE_KEY);return isTheme(saved)?saved:DEFAULT_THEME}catch{return DEFAULT_THEME}}
@@ -19,7 +20,7 @@ function updateDynamicThemeSurfaces(){
   });
 }
 function applyTheme(theme:ThemeId){
-  const option=themes.find(item=>item.id===theme)??themes[0];document.documentElement.dataset.theme=option.id;document.documentElement.style.colorScheme='dark';setBrowserColor(option.browserColor);persistTheme(option.id);
+  const option=themes.find(item=>item.id===theme)??themes[0];document.documentElement.dataset.theme=option.id;document.documentElement.style.colorScheme=option.scheme;setBrowserColor(option.browserColor);persistTheme(option.id);
   document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]').forEach(button=>{const active=button.dataset.themeChoice===option.id;button.setAttribute('aria-pressed',String(active));button.classList.toggle('active',active)});const label=document.querySelector<HTMLElement>('[data-current-theme]');if(label)label.textContent=option.label;requestAnimationFrame(updateDynamicThemeSurfaces);
 }
 function createThemeControl(){
