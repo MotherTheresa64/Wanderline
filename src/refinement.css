@@ -1,0 +1,153 @@
+/* Wanderline — final refinement layer.
+   Loaded after themes/app-v2/accessibility/showcase-design so these rules
+   only tune the shipped design; no layout is replaced. */
+
+/* --- Stat band ---------------------------------------------------------
+   Every card had a different amount of air and two of the four (0% values)
+   had no meter at all, so the row read as broken. Keep one track on every
+   cell and let the fill sit on top of it. */
+.wl-stat-grid {
+  margin-top: 12px;
+}
+
+.wl-stat {
+  position: relative;
+  min-height: 0 !important;
+  padding: 15px 18px 27px;
+  align-content: start;
+  row-gap: 3px;
+}
+
+.wl-stat::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 15px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--theme-line);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.wl-stat > div {
+  position: relative;
+  z-index: 1;
+  height: 4px !important;
+  margin-top: 9px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.wl-stat i {
+  height: 100%;
+  border-radius: 99px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent) 45%, transparent);
+}
+
+.wl-stat span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--theme-muted);
+}
+
+.wl-stat strong {
+  font-size: clamp(23px, 2.3vw, 31px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.wl-stat small {
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--theme-muted);
+}
+
+/* --- Hero --------------------------------------------------------------
+   The two hero actions are the primary entry points; give them one rhythm
+   and a comfortable target instead of two different heights. */
+.wl-hero {
+  min-height: 0;
+  padding: 34px clamp(24px, 3.6vw, 54px);
+}
+
+.wl-hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wl-hero-actions button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+/* --- Interior rows ----------------------------------------------------- */
+.wl-next-row {
+  min-height: 54px;
+}
+
+.wl-panel-note {
+  margin-top: 4px;
+}
+
+/* One focus treatment everywhere, so keyboard use looks intentional. */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* --- Phones ------------------------------------------------------------
+   Bigger targets and tighter gutters; nothing depends on hover here. */
+@media (max-width: 700px) {
+  .wl-page-inner {
+    padding: 20px 16px 88px;
+  }
+
+  .wl-hero {
+    padding: 26px 20px;
+    border-radius: 16px;
+  }
+
+  .wl-hero-actions {
+    width: 100%;
+  }
+
+  .wl-hero-actions button {
+    flex: 1;
+    min-height: 46px;
+  }
+
+  .wl-stat {
+    padding: 14px 14px 25px;
+  }
+
+  .wl-stat::after {
+    left: 14px;
+    right: 14px;
+    bottom: 13px;
+  }
+
+  .wl-stat strong {
+    font-size: 24px;
+  }
+
+  .wl-next-row {
+    min-height: 58px;
+    padding: 13px 2px;
+  }
+
+  .wl-search {
+    height: 44px;
+  }
+
+  .wl-panel-head button,
+  .wl-next-plans .wl-panel-head button {
+    min-height: 40px;
+    padding: 0 6px;
+  }
+}
