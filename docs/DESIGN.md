@@ -19,7 +19,7 @@ The result should read as "a workspace someone uses", not "a template someone fi
 
 ## Tokens
 
-Defined once in [`src/night-map-theme.css`](../src/night-map-theme.css) on `html[data-theme="coast"]`:
+Defined once in [`src/night-map-theme.css`](../src/night-map-theme.css) on `html[data-theme]`:
 
 | Token | Value | Used for |
 | --- | --- | --- |
@@ -33,9 +33,22 @@ Defined once in [`src/night-map-theme.css`](../src/night-map-theme.css) on `html
 | `--theme-muted` | `#9aa89c` | Secondary text, metadata |
 | `--theme-accent` | `#e2a15c` | Primary actions, kickers, active markers |
 | `--theme-accent-2` | `#c8d9a8` | Warm secondary highlight |
-| `--theme-green` | `#4a8a71` (finishing layer) | Confirmed state, progress, route actions |
+| `--theme-green` | `#4a8a71` | Confirmed state, progress, route actions |
 
-The finishing layer also calms the primary green from the earlier `#4f8f77` to `#4a8a71`, because the brighter mint pulled too much attention next to the amber.
+Night map also calms the primary green from the earlier `#4f8f77` to `#4a8a71`, because the brighter mint pulled too much attention next to the amber.
+
+### Palettes
+
+All four appearances share the layout rules. Only colour changes, and every value is dark:
+
+| Appearance | Canvas | Action accent | Confirmed / route |
+| --- | --- | --- | --- |
+| Night map (default) | `#0a1110` | `#e2a15c` | `#4a8a71` |
+| Sunset | `#101817` | `#e17a59` | `#4f8f7a` |
+| Terracotta | `#171411` | `#d9795d` | `#7c8a63` |
+| Night train | `#11191e` | `#e5a76f` | `#558f8b` |
+
+Switching appearance swaps this token block and nothing else. Surfaces, spacing, radii and the type scale are declared once, so the workspace repaints without reflowing.
 
 ## Theme architecture
 
@@ -45,7 +58,7 @@ Appearance is data, not a separate build:
 - The active id is written to `html[data-theme]` and persisted under `wanderline-theme-v2`. A failed storage read or write falls back to the default appearance instead of breaking the picker.
 - The picker is injected as a real dialog: `aria-haspopup`, `aria-expanded`, `aria-pressed` on every option, Escape and outside-click dismissal, and a visible current-appearance label.
 - A `MutationObserver` recomputes the CSS conic-gradient rings after React re-renders, because those rings are painted from computed values rather than markup.
-- The CSS itself is layered. Base sheets (`app-v2.css`, `showcase-design.css`) came first; the appearance stack loads after them: `night-map-theme.css` for palette and surfaces, `refinement.css` for the stat band and phone behaviour, and `polish.css` for spacing, type scale, and component finishing. Each layer is scoped to `html[data-theme="coast"]`, so the other three appearances keep their own character.
+- The CSS itself is layered. Base sheets (`app-v2.css`, `showcase-design.css`) came first; the appearance stack loads after them: `night-map-theme.css` for the four palettes and the surface rules, `refinement.css` for the stat band and phone behaviour, and `polish.css` for spacing, type scale, and component finishing. The surface and finishing rules are scoped to `html[data-theme]` rather than to one id, so every appearance keeps the same layout and only the colour tokens change.
 
 `!important` appears in the appearance layers where the original sheets hard-code light surfaces. That is a deliberate migration seam: the alternative was a risky rewrite of a 42 KB stylesheet in one pass.
 

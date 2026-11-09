@@ -104,7 +104,7 @@ Wanderline is used at night, on a couch, while comparing train times and splitti
 The system is more than a palette swap. Four dark appearances share one token set, every surface is a real card with its own inset rules, money and times use tabular numerals, and the compact data type is paired with generous card padding so dense planning screens still breathe. Saved places get rotating artwork tints and a contour pattern instead of one repeated gradient block.
 
 - Full rationale, tokens and component rules: [`docs/DESIGN.md`](docs/DESIGN.md)
-- The appearance stack is layered and scoped (`night-map-theme.css`, `refinement.css`, `polish.css`) so the other three appearances keep their own character
+- All four appearances share one layout, type scale and component set: `night-map-theme.css` holds the palettes and the surface rules, while `refinement.css` and `polish.css` finish the same components in every one of them
 - The appearance picker is a real dialog: keyboard dismissal, `aria-pressed` state, persisted choice, and per-theme `theme-color` / `color-scheme`
 
 ## Scope and next steps
