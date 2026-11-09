@@ -7,6 +7,7 @@ import './themes.css';
 import './app-v2.css';
 import './accessibility.css';
 import './showcase-design.css';
+import './refinement.css';
 
 initializeThemes();
 
