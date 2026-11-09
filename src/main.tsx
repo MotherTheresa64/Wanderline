@@ -8,6 +8,7 @@ import './app-v2.css';
 import './accessibility.css';
 import './showcase-design.css';
 import './refinement.css';
+import './postcard-theme.css';
 
 initializeThemes();
 
