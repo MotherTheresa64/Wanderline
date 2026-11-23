@@ -108,7 +108,7 @@ Before considering a commit production-ready, verify:
 19. destination weather loads when Open-Meteo is reachable and fails gracefully otherwise;
 20. theme selection persists;
 21. native Web Share / clipboard fallback behave correctly;
-22. error recovery clears only Wanderline v2 workspace data;
+22. error recovery clears only Wanderline v3 workspace data;
 23. `/api/health` and `/api/config` return expected JSON;
 24. unknown `/api/*` returns JSON `404`;
 25. no uncaught browser errors appear during the primary workflows.

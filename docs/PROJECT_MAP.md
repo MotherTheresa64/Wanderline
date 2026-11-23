@@ -6,7 +6,7 @@
 │   ├── App.tsx             Collaborative product UI and all local CRUD/workflows
 │   ├── model.ts           Workspace/trip/member/activity/expense domain model + derived calculations
 │   ├── demo.ts            Rich Barcelona collaborative sample workspace
-│   ├── storage.ts         Validated/versioned v2 local persistence adapter
+│   ├── storage.ts         Validated/versioned v3 local persistence adapter
 │   ├── maps.ts            Google Maps universal search/directions links
 │   ├── weather.ts         Destination geocoding + current weather via Open-Meteo
 │   ├── firebase.ts        Optional Firebase Google-auth adapter
@@ -14,7 +14,7 @@
 │   ├── themes.css         Theme palettes + appearance picker
 │   ├── app-v2.css        Rebuilt responsive collaborative Wanderline UI
 │   ├── accessibility.css Focus visibility and reduced-motion rules
-│   └── ErrorBoundary.tsx Runtime recovery + v2 local-workspace reset
+│   └── ErrorBoundary.tsx Runtime recovery + v3 local-workspace reset
 ├── server/
 │   └── index.ts           Express production host and non-secret config/health endpoints
 ├── scripts/

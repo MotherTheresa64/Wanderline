@@ -12,7 +12,7 @@ The public portfolio release is deliberately usable without credentials. Its bro
 Browser
   React 19 + TypeScript
       |
-      +-- Workspace v2
+      +-- Workspace v3
       |    +-- multiple trips
       |    +-- members + roles + pending invitations
       |    +-- activities + suggestions + votes
@@ -46,7 +46,7 @@ A workspace contains:
 - current local user id;
 - active trip id;
 - multiple trips;
-- schema version (`2`) for safe browser persistence/migration.
+- schema version (`3`, `Workspace.version`, `src/model.ts:110`); `loadWorkspace` ignores stored data with any other version and falls back to the sample.
 
 ### Trip
 
@@ -72,7 +72,9 @@ Trip members use three roles:
 - **Editor** — can modify shared trip planning resources;
 - **Viewer** — read-only shared trip experience.
 
-The credential-free release can create pending invitations locally so the full membership UX is testable. Real invitation delivery, acceptance, authenticated membership, and real-time synchronization are intentionally the Firebase/Firestore boundary.
+The credential-free release can create pending invitations locally so the full membership UX is testable. Real invitation delivery, acceptance, authenticated membership, and real-time synchronization are not implemented.
+
+**Roles are enforced in the UI only.** `canEdit = currentMember.role !== 'viewer'` (`src/App.tsx:57`) hides or disables controls; `mutateTrip` does not check it, and there is no server or database to reject a write. The current user (`currentUserId`, seeded as `noah`, the owner) never changes, and the seed has one trip, so the Viewer experience cannot actually be reached in the live demo: the roster shows Editor and Viewer roles for other (fictional) travelers only.
 
 ## Itinerary and ideas
 
@@ -109,7 +111,7 @@ This is intentional for the public portfolio release: users get familiar Google 
 
 ## Weather
 
-`src/weather.ts` first geocodes the active trip destination through Open-Meteo, then retrieves current conditions in Fahrenheit. Weather is non-critical; failures produce a useful fallback instead of blocking trip planning.
+`src/weather.ts` first geocodes the active trip destination through Open-Meteo, then retrieves current temperature and WMO weather code in Fahrenheit. The destination is reduced to the text before its first comma and only the first geocoding match is used. It is a live, keyless browser-side call (current conditions only, no forecast); requests abort when the destination changes, and any failure shows "Weather unavailable" without blocking the UI. The CSP `connect-src` lists the two Open-Meteo hosts (`src/weather.ts`).
 
 ## Budget and settlement model
 
@@ -122,7 +124,7 @@ Expenses track:
 - split mode (`personal`, `equal`, or `custom`);
 - optional custom shares.
 
-Derived balance logic calculates what each traveler paid versus their assigned share. A settlement pass matches debtors and creditors to provide a concise “who owes whom” result.
+Derived balance logic calculates what each traveler paid versus their assigned share. `balances()` (`src/model.ts:182`) computes paid minus share per active member; `calculateSettlements()` (`src/App.tsx:183`) greedily matches debtors to creditors and ignores residuals under one cent. The expense form requires custom shares to add up to the amount. Money is floating-point dollars (not integer cents); the cent threshold absorbs the error for display.
 
 Search filters only visible ledger rows; aggregate budget values always derive from the complete expense ledger.
 
@@ -156,7 +158,7 @@ Global search spans:
 - reservations;
 - travelers.
 
-`Ctrl/Cmd + K` focuses search. Native Web Share is used where available with clipboard fallback elsewhere.
+`Ctrl/Cmd + K` focuses search. Share sends a text trip summary (name, destination, dates) through Web Share or the clipboard (`src/App.tsx:112`). It deliberately does not share a URL, because trips live only in the sender's browser and a link would open the recipient's own workspace (commit `247f4c3`).
 
 ## Appearance
 
@@ -166,14 +168,14 @@ Theme preference is device-local today and can move into the authenticated user 
 
 ## Persistence boundary
 
-`src/storage.ts` validates and persists the versioned local workspace under `wanderline-workspace-v3`. Invalid or blocked storage falls back to the built-in sample workspace rather than crashing the app.
+`src/storage.ts` validates and persists the versioned local workspace under `wanderline-workspace-v3` (an effect saves on every change, `App.tsx:62`; `looksLikeTrip` checks required fields and arrays, individual dates and amounts are not re-validated). Invalid or blocked storage falls back to the built-in sample workspace rather than crashing the app.
 
 The local adapter is intentionally isolated. The final hosted implementation should replace it with an authenticated repository/data layer without changing the presentation/domain model.
 
-## Firebase / Firestore target architecture
+## Firebase / Firestore target architecture (not implemented)
 
 ```text
-Firebase Authentication
+Firebase Authentication (target only; no Firestore code exists in this repo)
       |
       v
 Authenticated user
@@ -206,6 +208,35 @@ Vite builds the browser client and TypeScript builds the Express host. The serve
 - immutable caching for hashed client assets;
 - fresh SPA HTML;
 - graceful process shutdown.
+
+## Authentication
+
+`src/firebase.ts` initialises Firebase Auth only when all four `VITE_FIREBASE_*` values exist. The only call site is the sidebar sign-in: without config it shows "Firebase is not linked yet"; with config it opens the Google popup and says trips stay on this device (honest toast, commit `247f4c3`). Signing in does not change what data is shown or stored: there is no per-user storage and no Firestore client. Sign-in has not been run against a real project from this repo.
+
+## Security decisions
+
+`server/index.ts:9-18` sets CSP (`default-src 'self'`; `script-src 'self' https://apis.google.com`; `connect-src` for Google/Firebase and the two Open-Meteo hosts; `frame-src` for Google sign-in; `object-src 'none'`; `frame-ancestors 'none'`), HSTS, `X-Frame-Options: DENY`, `nosniff`, referrer and permissions policies. Maps links open with `noopener,noreferrer`. Missing hashed assets return 404 instead of HTML. There are no Firestore rules because there is no Firestore.
+
+## Testing strategy
+
+`npm test` (vitest, run in CI): 11 tests. `storage.test.ts` (6): empty storage gives the demo, malformed JSON falls back, a wrong version is ignored, save/restore round trip, storage key, reset. `theme.test.ts` (5): four themes in order, stable key, and three workspace create/round-trip/reset cases. Untested: expense splitting and settlement maths, roles, the weather hook, all UI. `npm run check` and `npm run smoke:server` cover the build and host; `docs/QA.md` is the manual matrix.
+
+## CI and deployment
+
+CI (`.github/workflows/ci.yml`, Node 22.16.0, `npm ci`): `check`, `test`, `smoke:server`. Render builds `main` with `npm run check`. https://wanderline-s1yv.onrender.com returns `{"firebase":false,"collaboration":"local-demo"}` from `/api/config`, so the live site is a single-browser, local-storage demo: no sharing between users, no cloud sync, sign-in unverified live. Open-Meteo weather and Google Maps links are the only real external integrations.
+
+## Known limitations
+
+- No backend data, multi-user collaboration or real invitations; roles are cosmetic (see above).
+- Expenses are USD only, stored as floating-point dollars.
+- Data is per-browser; clearing site data loses it (there is no export; Reset restores the sample).
+- Weather resolves only the destination's first comma-separated token to the first geocoding match, so ambiguous names can show the wrong city.
+- Voting toggles the current user's vote on an idea; with one effective user it demonstrates the data model more than a group decision.
+- No tests for the financial logic.
+
+## Future improvements (not implemented)
+
+Firebase Auth plus Firestore behind the storage seam with rules tests; integer-cent money and unit tests for splits and settlements; E2E tests; multi-currency with stored rates; server-side role enforcement.
 
 ## Tradeoffs
 

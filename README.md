@@ -96,7 +96,7 @@ The hosted demo runs without Firebase credentials, so it is the browser-local de
 - Reduced-motion support
 - Local workspace persistence with defensive recovery when browser storage is malformed or unavailable
 - Express production host with health/config endpoints, secure headers, API 404 handling, caching policy, and SPA fallback
-- GitHub Actions runs `npm run check` plus the compiled-server smoke test
+- GitHub Actions runs `npm run check`, `npm test` (11 vitest tests: local storage and theme only; the expense/settlement maths is untested) and the compiled-server smoke test
 - Render builds and serves `main` through the `render.yaml` blueprint
 
 ## Design notes
@@ -111,7 +111,7 @@ The system is more than a palette swap. Four dark appearances share one token se
 
 ## Scope and next steps
 
-The demo is deliberately credential-free: it runs on a typed, versioned local-first workspace, so a reviewer can click through every role, vote, split, and booking without signing up. The cloud boundary is modeled and documented but not wired — Firebase Auth and Firestore replace the storage adapter once configured, with security rules enforcing membership and owner-only operations.
+The demo is deliberately credential-free: it runs on a typed, versioned local-first workspace, so a reviewer can try voting, splits and bookings without signing up (the signed-in user is always the trip owner, so the Viewer role is modelled but not reachable in the UI). The cloud boundary is modeled and documented but not wired — Firebase Auth and Firestore replace the storage adapter once configured, with security rules enforcing membership and owner-only operations.
 
 Three things I would do next, in order:
 
