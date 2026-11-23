@@ -17,7 +17,7 @@
 - Archive or permanently delete trips
 - Solo trips work without collaboration clutter
 - Add pending traveler invitations in the credential-free demo
-- Owner, Editor, and Viewer roles are modeled and enforced in the UI
+- Owner, Editor, and Viewer roles are modeled in the UI (a local demo roster: role enforcement and real invitations need the planned cloud sync)
 - Owners can change member roles or remove travelers
 - Shared activity history records meaningful trip changes
 - The local data model already matches the Firebase/Firestore collaboration boundary planned for the authenticated release
@@ -140,7 +140,7 @@ npm install
 npm run dev
 ```
 
-The app is fully reviewable without credentials. The Barcelona sample workspace and all local edits are stored under the versioned `wanderline-workspace-v2` browser key. Appearance is persisted separately.
+The app is fully reviewable without credentials. The Barcelona sample workspace and all local edits are stored under the versioned `wanderline-workspace-v3` browser key. Appearance is persisted separately.
 
 Full verification:
 

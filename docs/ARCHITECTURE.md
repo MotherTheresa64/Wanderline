@@ -166,7 +166,7 @@ Theme preference is device-local today and can move into the authenticated user 
 
 ## Persistence boundary
 
-`src/storage.ts` validates and persists the versioned local workspace under `wanderline-workspace-v2`. Invalid or blocked storage falls back to the built-in sample workspace rather than crashing the app.
+`src/storage.ts` validates and persists the versioned local workspace under `wanderline-workspace-v3`. Invalid or blocked storage falls back to the built-in sample workspace rather than crashing the app.
 
 The local adapter is intentionally isolated. The final hosted implementation should replace it with an authenticated repository/data layer without changing the presentation/domain model.
 

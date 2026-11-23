@@ -14,7 +14,7 @@ Use this after automated verification and again against the deployed Render URL.
 - [ ] Credential-free sample workspace is immediately usable.
 - [ ] Refresh preserves v2 trip workspace changes.
 - [ ] Malformed/unavailable local storage falls back safely.
-- [ ] Error boundary can reload or clear `wanderline-workspace-v2` correctly.
+- [ ] Error boundary can reload or clear `wanderline-workspace-v3` correctly.
 - [ ] Sample reset restores the original Barcelona collaboration workspace without removing theme preference.
 
 ## Multiple trips
