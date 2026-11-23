@@ -4,6 +4,8 @@
 
 **Live demo:** https://wanderline-s1yv.onrender.com
 
+The hosted demo runs without Firebase credentials, so it is the browser-local demo: data stays in your browser, and Google sign-in and cloud sync are not active there. They need your own Firebase project (see setup below).
+
 ![Wanderline in the Night map theme: day tabs, a confirmed walk, a planned market visit, and a shared budget bar](docs/cover.svg)
 
 *The default **Night map** appearance: map-ink surfaces, amber for actions, sage for confirmed plans. The [design notes](docs/DESIGN.md) explain the system.*

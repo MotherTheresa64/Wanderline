@@ -492,3 +492,24 @@ html[data-theme] .wl-panel-note {
     height: 128px;
   }
 }
+
+/* --- 12px text floor at every width (base styles used 8-11px) ----------- */
+:is(.wl-trip-button small,.wl-trip-code,.wl-trip-menu>button>span,.wl-trip-menu b,.wl-trip-menu small,.wl-nav button,.wl-nav button>b,.wl-sidebar-summary span,.wl-reset,.wl-profile>span,.wl-profile b,.wl-profile small,.wl-search input,.wl-search kbd,.wl-search-results b,.wl-search-results small,.wl-weather small,.wl-share,.wl-primary,.wl-page-head>div>span,.wl-kicker,.wl-panel-head span,.wl-subhead span,.wl-page-head p,.wl-hero-meta span,.wl-hero-actions button,.wl-stat>span,.wl-stat>small,.wl-panel-head button,.wl-next-row b,.wl-next-row small,.wl-next-row strong,.wl-member-stack b,.wl-balance-list b,.wl-member-stack small,.wl-balance-list small,.wl-avatar,.wl-avatar.small,.wl-panel-note,.wl-panel-copy,.wl-reservation-mini b,.wl-reservation-mini small,.wl-decision-summary b,.wl-decision-summary p,.wl-day-tabs button small,.wl-day-tabs button b,.wl-day-tabs button span,.wl-time b,.wl-activity-title>div>small,.wl-status,.wl-location,.wl-activity-card>p,.wl-activity-foot,.wl-route-art>span,.wl-route-card p,.wl-day-team p,.wl-tip-card p,.wl-route-card button,.wl-tip-card>span,.wl-ideas-intro b,.wl-ideas-intro p,.wl-idea-card>p,.wl-idea-meta,.wl-voters>span,.wl-idea-actions button,.wl-section-search input,.wl-place-art span,.wl-place-body>small,.wl-place-body p,.wl-place-body>span,.wl-place-actions button,.wl-budget-hero span,.wl-budget-hero p,.wl-budget-ring small,.wl-expense-row b,.wl-expense-row small,.wl-expense-row>strong,.wl-category-breakdown>div>span,.wl-category-breakdown>div>span strong,.wl-balance-list strong,.wl-settlements p,.wl-packing-progress b,.wl-packing-progress small,.wl-packing-list b,.wl-packing-list small,.wl-subhead>button,.wl-note-grid article>div small,.wl-note-grid p,.wl-note-grid footer span,.wl-note-grid footer button,.wl-booking-list small,.wl-booking-list article>div:nth-child(2)>button,.wl-booking-list p,.wl-role-guide b,.wl-role-guide p,.wl-traveler-list b,.wl-traveler-list small,.wl-traveler-list select,.wl-traveler-list strong,.wl-history p,.wl-history small,.wl-empty b,.wl-empty p,.wl-empty button,.wl-form-title p,.wl-modal form>label,.wl-form-grid>label,.wl-custom-splits label,.wl-modal input,.wl-modal select,.wl-modal textarea,.wl-modal legend,.wl-check-option,.wl-form-submit,.wl-form-actions .danger,.wl-custom-splits p,.wl-custom-splits strong,.wl-toast,.wl-stat span,.wl-stat small,.wl-day-tabs button.active small,.wl-day-tabs button.active span,.wl-activity-title > div > small,.wl-activity-title .wl-location,.wl-activity-foot button,.wl-idea-card p,.wl-place-card p,.theme-toggle-copy b,.theme-toggle-copy small,.theme-panel-head small,.theme-option b,.theme-option small
+) {
+  font-size: 0.75rem !important;
+}
+
+.wl-search input { min-height: 24px; }
+
+/* --- Touch / phone: 44px hit areas ---------------------------------------- */
+@media (pointer: coarse), (max-width: 767px) {
+  button,
+  select,
+  textarea,
+  input:not([type='checkbox'], [type='radio']),
+  [role='button'],
+  [role='tab'] {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
